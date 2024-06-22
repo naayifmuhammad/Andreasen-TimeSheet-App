@@ -1,8 +1,7 @@
 from django import forms 
 from .models import Timesheet, Project
-from datetime import date
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class TimesheetForm(forms.ModelForm):
@@ -10,7 +9,9 @@ class TimesheetForm(forms.ModelForm):
         model = Timesheet
         fields = ['date', 'hours_worked', 'description']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            'date': forms.DateInput(attrs={'type': 'date','class':'form-control smaller','value': timezone.now().date()}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'hours_worked': forms.NumberInput(attrs={'type':'number','class':'form-control smaller'})
         }
 
 class ProjectForm(forms.ModelForm):
@@ -18,10 +19,10 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = ['code', 'name', 'description', 'start_date', 'end_date']
         widgets = {
-            'code': forms.TextInput(attrs={'placeholder': 'ff–NNNN', 'class': 'form-control'}),
+            'code': forms.TextInput(attrs={'placeholder': 'ff-NNNN', 'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+            'start_date': forms.DateInput(attrs={'type': 'date','value': timezone.now().date(), 'class': 'form-control'}, format='%Y-%m-%d'),
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
         }
     
