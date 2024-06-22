@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Projects {% endblock %}
+{% block title %} Admin Dashboard {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
@@ -16,7 +16,7 @@
                     <div class="row">
                         <div class="col-sm-6 text-left">
                             <h5 class="card-category"></h5>
-                            <h2 class="card-title">Projects Summary</h2>
+                            <h2 class="card-title">Projects Overview</h2>
                         </div>
                     </div>
                     <div class="container">
@@ -31,19 +31,36 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-title">
+                                        Inactive projects
+                                    </div>
+                                    <div class="card-body">
+                                        {{inactive_project_count}}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 spacing">
-            <div class="col-pm-4">
-                {%  if user.is_staff %}
-                <a href="home/new-project.html" class="extendedbtn btn btn-primary">New Project</a>
-                {% endif %}
-               
-            </div>
-        </div>
+        <div class="container">
+            {% if user.is_staff %}
+            <div class="row spacing">
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                  <a href="{% url 'create_project' %}" class="extendedbtn btn btn-primary w-100">New Project</a>
+                </div>
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                  <a href="{% url 'old_projects' %}" class="extendedbtn btn btn-primary w-100">Old Projects</a>
+                </div>
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                  <a href="{% url 'manage_projects' %}" class="extendedbtn btn btn-primary w-100">Manage Projects</a>
+                </div>
+              </div>
+            {% endif %}
+          </div>
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">

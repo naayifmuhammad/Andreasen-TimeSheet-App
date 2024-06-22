@@ -13,6 +13,7 @@ from django.utils.timezone import now
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
+from django.utils import timezone
 
 
 
@@ -112,10 +113,8 @@ def projects_tab(request):
         'active_project_count': active_project_count,
         'inactive_project_count' : inactive_project_count,
     }
-    if request.user.is_staff:
-        return render(request, 'home/admin/admin_projects.html', context)
-    else:
-        return render(request, 'home/projects.html', context)
+
+    return render(request, 'home/projects.html', context)
 
 
 
@@ -153,6 +152,10 @@ def toggle_project_status(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
     print(project.name, " ", project.is_active)
     project.is_active = not project.is_active
+    if not project.is_active and not project.end_date:
+        project.end_date = timezone.now().date()
+    else:
+        project.end_date = None
     project.save()
     return redirect("manage_projects")
 
