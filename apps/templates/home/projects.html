@@ -51,18 +51,21 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
+                        <input type="text" id="searchInput" placeholder="Search..." class="form-control">
                         <table class="table tablesorter" id="active-projects-table">
                             <thead class="text-primary">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
-                                    </tr>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 {% for project in active_projects %}
                                 <tr onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">
+                                    <td>{{ project.code }}</td>
                                     <td>{{ project.name }}</td>
                                     <td>{{ project.description }}</td>
                                     <td>{{ project.start_date }}</td>
@@ -70,12 +73,37 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center">No active projects found.</td>
+                                    <td colspan="4" class="text-center">No active projects found.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                    
+                    <script>
+                        // JavaScript for client-side search
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const searchInput = document.getElementById('searchInput');
+                            const rows = document.querySelectorAll('#active-projects-table tbody tr');
+                    
+                            searchInput.addEventListener('keyup', function(event) {
+                                const term = event.target.value.toLowerCase();
+                                rows.forEach(row => {
+                                    const columns = row.getElementsByTagName('td');
+                                    let found = false;
+                                    for (let i = 0; i < columns.length; i++) {
+                                        const text = columns[i].textContent.toLowerCase();
+                                        if (text.includes(term)) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    row.style.display = found ? '' : 'none';
+                                });
+                            });
+                        });
+                    </script>
+                    
                 </div>
             </div>
         </div>

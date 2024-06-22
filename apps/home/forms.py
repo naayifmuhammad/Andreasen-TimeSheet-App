@@ -5,8 +5,6 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 
-
-
 class TimesheetForm(forms.ModelForm):
     class Meta:
         model = Timesheet
@@ -18,12 +16,20 @@ class TimesheetForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['name', 'description', 'start_date', 'end_date']
+        fields = ['code', 'name', 'description', 'start_date', 'end_date']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date', 'value': date.today().strftime('%Y-%m-%d')}),    
-            'hours': forms.NumberInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={'placeholder': 'ff–NNNN', 'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        self.fields['start_date'].input_formats = ['%Y-%m-%d']
+        self.fields['end_date'].input_formats = ['%Y-%m-%d']
+
 
 class EmployeeCreationForm(UserCreationForm):
     username = forms.CharField(

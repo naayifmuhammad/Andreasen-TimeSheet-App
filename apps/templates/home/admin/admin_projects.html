@@ -49,7 +49,7 @@
         <div class="container">
             <div class="row spacing">
               <div class="col-sm-6 col-md-4 col-lg-3">
-                <a href="home/new-project.html" class="extendedbtn btn btn-primary w-100">New Project</a>
+                <a href="{% url 'create_project' %}" class="extendedbtn btn btn-primary w-100">New Project</a>
               </div>
               <div class="col-sm-6 col-md-4 col-lg-3">
                 <a href="{% url 'old_projects' %}" class="extendedbtn btn btn-primary w-100">Old Projects</a>
@@ -66,10 +66,11 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <input type="text" id="searchInput" placeholder="Search...">
+                        <input type="text" id="searchInput" placeholder="Search..." class="form-control">
                         <table class="table tablesorter" id="active-projects-table">
                             <thead class="text-primary">
                                 <tr>
+                                    <th>Code</th>
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Start Date</th>
@@ -79,6 +80,7 @@
                             <tbody>
                                 {% for project in active_projects %}
                                 <tr onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">
+                                    <td>{{ project.code }}</td>
                                     <td>{{ project.name }}</td>
                                     <td>{{ project.description }}</td>
                                     <td>{{ project.start_date }}</td>

@@ -63,10 +63,11 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <input type="text" id="searchInput" placeholder="Search...">
+                        <input type="text" id="searchInput" onkeyup="searchFunction()" placeholder="Search for projects..." class="form-control mb-3">
                         <table class="table tablesorter" id="active-projects-table">
                             <thead class="text-primary">
                                 <tr>
+                                    <th>Code</th>
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Start Date</th>
@@ -77,7 +78,8 @@
                             <tbody>
                                 {% for project in projects %}
                                 <tr>
-                                    <td>{{ project.name }}</td>
+                                    <td>{{ project.code }}</td>
+                                    <td><a href="{% url 'project_details' project_id=project.id %}">{{ project.name }}</a></td>
                                     <td>{{ project.description }}</td>
                                     <td>{{ project.start_date }}</td>
                                     <td>{{ project.end_date }}</td>

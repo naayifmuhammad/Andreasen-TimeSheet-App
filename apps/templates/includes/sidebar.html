@@ -58,25 +58,15 @@
                     </a>
                 </li>
                 {% endif %}
-               
-                <!-- <li class="{% if 'icons' in segment %} active {% endif %}">
-                    <a href="/icons.html">
-                        <i class="tim-icons icon-atom"></i>
-                        <p>Icons</p>
+                {% if user.is_superuser %}
+                <li class="{% if 'index' in segment %} active {% endif %} ">
+                    <a href="home/admin">
+                        <i class="tim-icons icon-single-02"></i>
+                        <p>Admin Panel</p>
                     </a>
-                </li> -->
-                <!-- <li class="{% if 'map' in segment %} active {% endif %}">
-                    <a href="/map.html">
-                        <i class="tim-icons icon-pin"></i>
-                        <p>Maps</p>
-                    </a>
-                </li> -->
-                <!-- <li class="{% if 'notifications' in segment %} active {% endif %}">
-                    <a href="/notifications.html">
-                        <i class="tim-icons icon-bell-55"></i>
-                        <p>Notifications</p>
-                    </a>
-                </li> -->
+                </li>
+                {% endif %}
+
                 {% if not user.is_staff %}
                 <li class="{% if 'user' in segment %} active {% endif %}">
                     <a href="/user.html">

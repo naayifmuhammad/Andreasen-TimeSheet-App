@@ -11,6 +11,9 @@ from .models import Project, Timesheet
 from django.db.models import Sum
 from django.utils.timezone import now
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
+
 
 
 @login_required(login_url="/login/")
@@ -70,6 +73,7 @@ def timesheet(request):
     }
     return render(request, 'home/timesheet.html', context)
 
+
 @login_required(login_url="/login/")
 def project_details(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
@@ -93,21 +97,6 @@ def project_details(request,project_id):
         'timesheetcount':timesheetcount,
     }
     return render(request, 'home/project_details.html', context)
-    
-    
-    
-    
-    
-    # timesheets = Timesheet.objects.filter(project=project).order_by('date')  # Assuming 'date' field for chronological order
-    # total_time = timesheets.aggregate(total_time=Sum('hours_worked'))['total_time'] or 0
-    # update_count = timesheets.count()
-    # context = {
-    #     'project' : project,
-    #     'timesheets' : timesheets,
-    #     'total_time' : total_time,
-    #     'update_count' : update_count,
-    # }
-    # return render(request,'home/project_details.html',context)
 
 
 @login_required(login_url="/login/")
@@ -124,10 +113,8 @@ def projects_tab(request):
         'inactive_project_count' : inactive_project_count,
     }
     if request.user.is_staff:
-        print("is admin")
         return render(request, 'home/admin/admin_projects.html', context)
     else:
-        print("Regular user")
         return render(request, 'home/projects.html', context)
 
 
@@ -175,11 +162,11 @@ def create_project(request):
     if request.method == 'POST':
         form = ProjectForm(request.POST)
         if form.is_valid():
-            project = form.save()
+            form.save()
             return redirect('projects_tab')  # Redirect to a success page or another view
     else:
         form = ProjectForm()
-        return render(request, 'home/new-project.html', {'form': form})
+    return render(request, 'home/new-project.html', {'form': form})
 
 
 @login_required(login_url="/login/")
@@ -195,6 +182,23 @@ def timesheet_entry(request, project_id):
 def view_profile(request):
     return render(request, 'home/user.html')
 
+@login_required(login_url="/login/")
+def delete_user(request, user_id):
+    if request.user.is_staff:  #only admins can delete users
+        user = get_object_or_404(User, id=user_id)    
+        user.delete()
+    return redirect('manage_employees')  
+
+
+@login_required(login_url="/login/")
+def delete_timesheet(request, timesheet_id):
+    if not request.user.is_staff:  #only employees can do this
+        timesheet = get_object_or_404(Timesheet, id=timesheet_id)    
+        project = timesheet.project
+        timesheet.delete()
+        return redirect('project_details', project_id = project.id)
+    return redirect('')  
+
 
 @login_required(login_url="/login/")
 def add_timesheet_entry(request, project_id):
@@ -209,7 +213,7 @@ def add_timesheet_entry(request, project_id):
             timesheet.project = project
             timesheet.save()
             messages.success(request, 'Timesheet entry created successfully.')  # Success message
-            return redirect('timesheet')  # Redirect to 'timesheet' view after saving timesheet
+            return redirect('project_details',project_id = project.id)  # Redirect to 'timesheet' view after saving timesheet
         else:
             messages.error(request, 'Error submitting timesheet. Please correct the form errors.')  # Error message
             print(form.errors)  # Print form errors to console for debugging
@@ -254,7 +258,7 @@ def update_details(request):
 
 @login_required(login_url="/login/")
 def manage_employees(request):
-    all = User.objects.exclude(id=request.user.id).all()
+    all = User.objects.exclude(id=request.user.id).exclude(is_superuser = True).all()
     context = {
         'all' : all,
     }
@@ -289,3 +293,5 @@ def add_employee(request):
         form = EmployeeCreationForm()
     
     return render(request, 'home/admin/add_employee.html', {'form': form})
+
+

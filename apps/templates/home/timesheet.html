@@ -16,9 +16,11 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
+                        <input type="text" id="searchInput" placeholder="Search..." class="form-control">
                         <table class="table tablesorter" id="active-projects-table">
                             <thead class="text-primary">
                                 <tr>
+                                    <th>Code</th>
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Start Date</th>
@@ -29,7 +31,8 @@
                             <tbody>
                                 {% for project in active_projects %}
                                 <tr>
-                                    <td>{{ project.name }}</td>
+                                    <td>{{ project.code }}</td>
+                                    <td><a href="{% url 'project_details' project_id=project.id %}">{{ project.name }}</a></td>
                                     <td>{{ project.description }}</td>
                                     <td>{{ project.start_date }}</td>
                                     <td>{{ project.end_date }}</td>
@@ -45,6 +48,29 @@
                             </tbody>
                         </table>
                     </div>
+                    <script>
+                        // JavaScript for client-side search
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const searchInput = document.getElementById('searchInput');
+                            const rows = document.querySelectorAll('#active-projects-table tbody tr');
+                    
+                            searchInput.addEventListener('keyup', function(event) {
+                                const term = event.target.value.toLowerCase();
+                                rows.forEach(row => {
+                                    const columns = row.getElementsByTagName('td');
+                                    let found = false;
+                                    for (let i = 0; i < columns.length; i++) {
+                                        const text = columns[i].textContent.toLowerCase();
+                                        if (text.includes(term)) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    row.style.display = found ? '' : 'none';
+                                });
+                            });
+                        });
+                    </script>
                 </div>
             </div>
         </div>

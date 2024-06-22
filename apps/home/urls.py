@@ -28,6 +28,8 @@ urlpatterns = [
     path('profile',views.view_profile ,name='profile'),
     path('manage_employees/', views.manage_employees, name='manage_employees'),
     path('manage_employees/add/', views.add_employee, name='add_employee'),
+    path('delete_user/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('delete_timesheet/<int:timesheet_id>/', views.delete_timesheet, name='delete_timesheet'),
 
     # Matches any html file
     re_path(r'^.*\.*', views.pages, name='pages'),

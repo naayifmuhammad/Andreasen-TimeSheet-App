@@ -26,6 +26,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Action</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -41,6 +42,11 @@
                                             <a href="{% url 'make_admin' employee_id=employee.id %}" class="extendedbtn btn btn-primary w-100">Make admin</a>
                                         {% endif %}
                                     </td>
+                                   {% if not employee.is_staff or user.is_superuser %}
+                                   <td class="emp_btn_container">
+                                    <a href="{% url 'delete_user' user_id=employee.id %}" class="extendedbtn btn btn-danger w-100">Delete</a>
+                                    </td>
+                                   {% endif %}
                                 </tr>
                                 {% empty %}
                                 <tr>

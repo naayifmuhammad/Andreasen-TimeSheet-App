@@ -1,47 +1,33 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} New Project {% endblock %} 
-
-<!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Create Project{% endblock %}
 
 {% block content %}
-
 <div class="content">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Create New Project</h4>
-                </div>
-                <div class="card-body">
+    <div class="container">
+        <div class="row ">
+            <div class="col-md-6 offset-md-3 ">
+                <div class="card">
+                    <div class="card-header text-center py-4">
+                        <h4 class="title">Create Project</h4>
+                        <h6 class="card-category">
+                            {% if msg %}
+                                <span class="text-danger">{{ msg|safe }}</span>
+                            {% endif %} 
+                        </h6>
+                    </div>
                     <form method="post" action="{% url 'create_project' %}">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <label for="name">Project Name:</label>
-                            <input type="text" class="form-control" id="name" name="name">
+                        <div class="card-body px-5 py-3">
+                            {{ form.as_p }}
                         </div>
-                        <div class="form-group">
-                            <label for="description">Description:</label>
-                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary">Create Project</button>
                         </div>
-                        <div class="form-group">
-                            <label for="start_date">Start Date:</label>
-                            <input type="date" class="form-control" id="start_date" name="start_date">
-                        </div>
-                        <div class="form-group">
-                            <label for="end_date">End Date:</label>
-                            <input type="date" class="form-control" id="end_date" name="end_date">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Create Project</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-{% endblock content %}
-
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% endblock %}

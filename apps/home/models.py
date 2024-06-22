@@ -4,6 +4,7 @@ from django.db import models
 from django.conf import settings
 
 class Project(models.Model):
+    code = models.CharField(default="",max_length=255,unique=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     start_date = models.DateField()

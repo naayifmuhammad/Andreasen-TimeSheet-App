@@ -36,38 +36,40 @@
         </div>
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Active Projects</h4>
+                <div class="card-header text-center py-4">
+                    <h4 class="title">Inactive Projects</h4>
+                    <input type="text" id="searchInput" onkeyup="searchFunction()" placeholder="Search for projects..." class="form-control mb-3">
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table tablesorter" id="active-projects-table">
-                            <thead class="text-primary">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
-                                    </tr>
-                            </thead>
-                            <tbody>
-                                {% for project in inactive_projects %}
-                                <tr onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">
-                                    <td>{{ project.name }}</td>
-                                    <td>{{ project.description }}</td>
-                                    <td>{{ project.start_date }}</td>
-                                    <td>{{ project.end_date }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center">No inactive projects found.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table tablesorter" id="inactive-projects-table">
+                        <thead class="text-primary">
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in inactive_projects %}
+                            <tr onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">
+                                <td>{{ project.code }}</td>
+                                <td>{{ project.name }}</td>
+                                <td>{{ project.description }}</td>
+                                <td>{{ project.start_date }}</td>
+                                <td>{{ project.end_date }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No inactive projects found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -75,5 +77,31 @@
 
     <!-- Specific Page JS goes HERE  -->
     {% block javascripts %}
+
+    <script>
+        function searchFunction() {
+            // Declare variables
+            var input, filter, table, tr, td, i, j, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toLowerCase();
+            table = document.getElementById("inactive-projects-table");
+            tr = table.getElementsByTagName("tr");
+        
+            // Loop through all table rows, and hide those who don't match the search query
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none"; // Hide the row initially
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = ""; // Show the row if any cell matches the query
+                            break; // No need to check other cells in this row
+                        }
+                    }
+                }
+            }
+        }
+        </script>
 
     {% endblock javascripts %}

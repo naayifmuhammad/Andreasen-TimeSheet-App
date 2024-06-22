@@ -56,6 +56,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
+                            <input type="text" id="searchInput" placeholder="Search..." class="form-control">
                             <table class="table tablesorter" id="timesheets-table">
                                 <thead class="text-primary">
                                     <tr>
@@ -64,6 +65,9 @@
                                         <th>Notes</th>
                                         {% if user.is_staff %}
                                         <th>Updated by</th>
+                                        {% endif %}
+                                        {% if not user.is_staff or not user.is_superuser %}
+                                        <th></th>
                                         {% endif %}
                                     </tr>
                                 </thead>
@@ -78,7 +82,12 @@
                                             {{timesheet.employee}}
                                         </td>
                                         {% endif %}
+                                        
+                                        {% if not user.is_staff or not user.is_superuser %}
+                                        <td><a href="{% url 'delete_timesheet' timesheet_id=timesheet.id %}" class="extendedbtn btn btn-danger w-100">Delete</a></td>
+                                        {% endif %}
                                     </tr>
+
                                     {% empty %}
                                     <tr>
                                         {%  if user.is_staff %}
@@ -96,6 +105,29 @@
                                 </tbody>
                             </table>
                         </div>
+                        <script>
+                            // JavaScript for client-side search
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const searchInput = document.getElementById('searchInput');
+                                const rows = document.querySelectorAll('#timesheets-table tbody tr');
+                        
+                                searchInput.addEventListener('keyup', function(event) {
+                                    const term = event.target.value.toLowerCase();
+                                    rows.forEach(row => {
+                                        const columns = row.getElementsByTagName('td');
+                                        let found = false;
+                                        for (let i = 0; i < columns.length; i++) {
+                                            const text = columns[i].textContent.toLowerCase();
+                                            if (text.includes(term)) {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        row.style.display = found ? '' : 'none';
+                                    });
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
             </div>
