@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} New Timesheet Entry {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">New Time Sheet Entry for <b>{{ project.name }}</b></h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'add_timesheet_entry' project_id=project.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            {{ form.as_p }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+{% endblock javascripts %}

@@ -1,0 +1,26 @@
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.extendedbtn {
+    width: 100%;
+}
+
+.rounded-button:hover {
+    background-color: #333;
+}
+
+ .spacing {
+    padding-bottom: 20px;
+ }
+
+ .img-small {
+    width: 50px;
+    vertical-align: bottom;
+    height: auto; /* Maintains aspect ratio */
+}
+.emp_btn_container{
+    width: 250px;
+}
