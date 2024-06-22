@@ -225,35 +225,40 @@ def add_timesheet_entry(request, project_id):
 
 
 
-#account update related operations:
+
+#account related updates 
 @login_required
-def update_details(request):
+def update_username(request):
     if request.method == 'POST':
         username = request.POST.get('username')
-        password = request.POST.get('password')
-        email = request.POST.get('email')
-
-        user = request.user
-
-        # Update username if provided
         if username:
-            user.username = username
+            request.user.username = username
+            request.user.save()
+            messages.success(request, 'Username updated successfully.')
+        return redirect('profile')  # Adjust the redirect URL as needed
 
-        # Update password if provided
+@login_required
+def update_password(request):
+    if request.method == 'POST':
+        password = request.POST.get('password')
         if password:
-            user.set_password(password)
+            request.user.set_password(password)
+            request.user.save()
+            messages.success(request, 'Password updated successfully.')
+        return redirect('profile')  # Adjust the redirect URL as needed
 
-        # Update email if provided
+@login_required
+def update_email(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
         if email:
-            user.email = email
-
-        # Save the updated user object
-        user.save()
-
-        messages.success(request, 'Your details have been updated successfully.')
-        return redirect('profile')  
+            request.user.email = email
+            request.user.save()
+            messages.success(request, 'Email updated successfully.')
+        return redirect('profile')  # Adjust the redirect URL as needed
     
-    return render(request, 'user.html')  
+
+
 
 
 @login_required(login_url="/login/")

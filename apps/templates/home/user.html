@@ -1,71 +1,86 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} User Profile {% endblock %} 
+{% block title %} User Profile {% endblock %}
 
 {% block stylesheets %}
-  <!-- Specific Page CSS goes HERE  -->
-  <style>
-    /* Add any custom styles specific to this page */
-    .update-details {
-      margin-top: 20px;
-    }
-    .update-details form {
-      margin-bottom: 20px;
-    }
-    .account-info {
-      margin-top: 20px;
-    }
-  </style>
+<!-- Specific Page CSS goes HERE  -->
+<style>
+  /* Add any custom styles specific to this page */
+  .update-details {
+    margin-top: 20px;
+  }
+
+  .update-details form {
+    margin-bottom: 20px;
+  }
+
+  .account-info {
+    margin-top: 20px;
+  }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
 
 <div class="content">
   <div class="row">
-    <!-- Left Column: Update Details -->
     <div class="col-md-8">
       <div class="update-details">
         <h3>Update Details</h3>
-        <form id="updateDetailsForm" method="POST" action="{% url 'update_details' %}">
+
+        <!-- Update Username Form -->
+        <form id="updateUsernameForm" method="POST" action="{% url 'update_username' %}">
           {% csrf_token %}
           <div class="form-group">
             <label for="username">New Username</label>
             <input type="text" class="form-control" id="username" name="username" placeholder="Enter new username">
           </div>
+          <button type="submit" class="btn btn-primary">Update Username</button>
+        </form>
+
+        <!-- Update Password Form -->
+        <form id="updatePasswordForm" method="POST" action="{% url 'update_password' %}">
+          {% csrf_token %}
           <div class="form-group">
             <label for="password">New Password</label>
             <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
           </div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+
+        <!-- Update Email Form -->
+        <form id="updateEmailForm" method="POST" action="{% url 'update_email' %}">
+          {% csrf_token %}
           <div class="form-group">
             <label for="email">New Email</label>
             <input type="email" class="form-control" id="email" name="email" placeholder="Enter new email">
           </div>
-          <button type="submit" class="btn btn-primary">Update Details</button>
+          <button type="submit" class="btn btn-primary">Update Email</button>
         </form>
       </div>
     </div>
-    
+
+
     <!-- Right Column: Account Info -->
     <div class="col-md-4">
       <div class="card card-user account-info">
         <div class="card-body">
           <p class="card-text">
-            <div class="author">
-              <div class="block block-one"></div>
-              <div class="block block-two"></div>
-              <div class="block block-three"></div>
-              <div class="block block-four"></div>
-              <a href="javascript:void(0)">
-                <img class="avatar" src="{{ ASSETS_ROOT }}/img/company/avatar.jpg" alt="...">
-                <h5 class="title">{{ user.username }}</h5>
-              </a>
-              <p class="description">
-                {{ user.email }}
-              </p>
-            </div>
+          <div class="author">
+            <div class="block block-one"></div>
+            <div class="block block-two"></div>
+            <div class="block block-three"></div>
+            <div class="block block-four"></div>
+            <a href="javascript:void(0)">
+              <img class="avatar" src="{{ ASSETS_ROOT }}/img/company/avatar.jpg" alt="...">
+              <h5 class="title">{{ user.username }}</h5>
+            </a>
+            <p class="description">
+              {{ user.email }}
+            </p>
+          </div>
           </p>
           <div class="card-description">
-            <!-- Additional info if needed -->
           </div>
         </div>
       </div>
@@ -76,8 +91,8 @@
 {% endblock content %}
 
 {% block javascripts %}
-  <!-- Specific Page JS goes HERE  -->
-  <script>
-    // Any specific JavaScript for this page can go here
-  </script>
+<!-- Specific Page JS goes HERE  -->
+<script>
+  // Any specific JavaScript for this page can go here
+</script>
 {% endblock javascripts %}
