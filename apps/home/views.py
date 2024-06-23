@@ -116,6 +116,8 @@ def project_details(request,project_id):
     
     if request.user.is_staff: # only needed for staff
         context.update(exclusive_staff_data)
+    else:
+        context['timesheetcount'] = timesheetcount
 
     return render(request, 'home/project_details.html', context)
 
