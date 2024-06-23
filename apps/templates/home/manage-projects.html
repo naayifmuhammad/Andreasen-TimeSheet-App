@@ -72,7 +72,8 @@
                                     <th>Description</th>
                                     <th>Start Date</th>
                                     <th>End Date</th>
-                                    <th>Actions</th> <!-- New column for actions -->
+                                    <th></th> <!-- New column for actions -->
+                                    <th></th> <!-- New column for actions -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -85,10 +86,13 @@
                                     <td>{{ project.end_date }}</td>
                                     <td>
                                         {% if project.is_active %}
-                                        <a href="{% url 'toggle_project_status' project_id=project.id %}" class="extendedbtn btn btn-primary w-100">Mark as inactive</a>
+                                        <a href="{% url 'toggle_project_status' project_id=project.id %}" class="extendedbtn btn btn-primary w-100">Mark as complete</a>
                                         {% else %}
                                         <a href="{% url 'toggle_project_status' project_id=project.id %}" class="extendedbtn btn btn-danger w-100">Mark as active</a>
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        <a id="delete-project-link" href="{% url 'delete_project' project_id=project.id %}" class="extendedbtn btn btn-danger w-100">Delete Project</a>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -130,5 +134,25 @@
 
     <!-- Specific Page JS goes HERE  -->
     {% block javascripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteProjectLink = document.getElementById('delete-project-link');
+        
+            if (deleteProjectLink) {
+                deleteProjectLink.addEventListener('click', function (event) {
+                    event.preventDefault(); // Prevent the link from immediately navigating
+                    
+                    const deleteUrl = this.href;
+                    const confirmation = confirm("Are you sure you want to delete this project? (Non recoverable)"); // Display confirmation dialog
+        
+                    if (confirmation) {
+                        window.location.href = deleteUrl; // Redirect to the delete URL if confirmed
+                    } else {
+                        
+                    }
+                });
+            }
+        });
+        </script>
 
     {% endblock javascripts %}

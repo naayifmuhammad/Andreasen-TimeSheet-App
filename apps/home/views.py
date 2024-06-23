@@ -1,5 +1,4 @@
 from django import template
-from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
@@ -11,8 +10,7 @@ from .models import Project, Timesheet
 from django.db.models import Sum
 from django.utils.timezone import now
 from django.contrib.auth.models import User
-from django.contrib.auth.views import LoginView
-from django.urls import reverse_lazy
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 
@@ -78,13 +76,32 @@ def timesheet(request):
 @login_required(login_url="/login/")
 def project_details(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
-    
+    individual_time_sheet_data = dict()
+
+    exclusive_staff_data = dict()
+
     if request.user.is_staff:
         # If user is staff, fetch total hours worked by all employees on this project
         timesheets = Timesheet.objects.filter(project=project).order_by('date')
         total_time = timesheets.aggregate(total_time=Sum('hours_worked'))['total_time'] or 0
-        timesheetcount = timesheets.count()
-        timesheets = timesheets.select_related('employee').order_by('date')  
+        
+        exclusive_staff_data['total_timesheet_count'] = timesheets.count()
+        
+        timesheets = timesheets.select_related('employee').order_by('date')
+        # Fetch distinct employees who have contributed to the project
+        employee_ids = timesheets.values_list('employee_id', flat=True).distinct()
+        employees = get_user_model().objects.filter(id__in=employee_ids)
+        
+        for employee in employees:
+            timesheets_of_employee = timesheets.filter(employee = employee)
+            timesheetcount = timesheets_of_employee.count()
+            individual_time_sheet_data[employee] = {
+                'timesheets' : timesheets_of_employee,
+                'total_hours_worked' : timesheets_of_employee.aggregate(hours_worked = Sum('hours_worked'))['hours_worked'] or 0,
+                'timesheetcount' : timesheetcount,
+            }  
+        exclusive_staff_data['individual_time_sheet_data'] = individual_time_sheet_data
+
     else:
         # If user is not staff, fetch timesheets added by the current user only
         timesheets = Timesheet.objects.filter(project=project, employee=request.user).order_by('date')
@@ -95,8 +112,11 @@ def project_details(request,project_id):
         'project': project,
         'timesheets': timesheets,
         'total_time': total_time,
-        'timesheetcount':timesheetcount,
     }
+    
+    if request.user.is_staff: # only needed for staff
+        context.update(exclusive_staff_data)
+
     return render(request, 'home/project_details.html', context)
 
 
@@ -150,13 +170,20 @@ def manage_projects(request):
 @login_required(login_url="/login/")
 def toggle_project_status(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
-    print(project.name, " ", project.is_active)
     project.is_active = not project.is_active
     if not project.is_active and not project.end_date:
         project.end_date = timezone.now().date()
     else:
         project.end_date = None
     project.save()
+    return redirect("manage_projects")
+
+
+@login_required(login_url="/login/")
+def delete_project(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+    print("delete now")
+    project.delete()
     return redirect("manage_projects")
 
 

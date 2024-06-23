@@ -27,7 +27,7 @@
                                         Update count
                                     </div>
                                     <div class="card-body">
-                                        {{timesheetcount}}
+                                        {{total_timesheet_count}}
                                     </div>
                                 </div>
                             </div>
@@ -58,6 +58,7 @@
                     <div class="table-responsive">
                         <input type="text" id="searchInput" placeholder="Search..." class="form-control">
                         <table class="table tablesorter" id="timesheets-table">
+                            {% if not user.is_staff %}
                             <thead class="text-primary">
                                 <tr>
                                     <th>Date</th>
@@ -98,13 +99,7 @@
                                     </td>
                                     {% endif %}
                                 </tr>
-                                {% if not user.is_staff %}
-                                <tr>
-                                    <td colspan="3" class="text-center"><a
-                                            href="{% url 'timesheet_entry' project_id=project.id %}"
-                                            class="btn btn-primary">Add Entry</a></td>
-                                </tr>
-                                {% endif %}
+                                
                                 {% endfor %}
 
                                 {% if not user.is_staff %}
@@ -115,12 +110,63 @@
                                 </tr>
                                 {% endif %}
                             </tbody>
+                            {% else %}
+                            <thead class="text-primary">
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Total Updates</th>
+                                    <th>Total Hours Worked</th>
+                                    <th></th> <!-- Column for expanding details -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee, data in individual_time_sheet_data.items %}
+                                <tr>
+                                    <td>{{ employee.username }}</td>
+                                    <td>{{ data.timesheetcount }}</td>
+                                    <td>{{ data.total_hours_worked }} hrs</td>
+                                    <td>
+                                        <button class="btn btn-primary" data-toggle="collapse" data-target="#timesheets_{{ employee.id }}">
+                                            View Timesheets
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="timesheets_{{ employee.id }}" class="collapse">
+                                    <td colspan="4">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Hours Worked</th>
+                                                    <th>Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for timesheet in data.timesheets %}
+                                                <tr>
+                                                    <td>{{ timesheet.date }}</td>
+                                                    <td>{{ timesheet.hours_worked }} hrs</td>
+                                                    <td>{{ timesheet.description }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="3" class="text-center">No timesheets found for this employee.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            {% endif %}
                         </table>
                     </div>
                     <script>
                         // JavaScript for client-side search
                         document.addEventListener('DOMContentLoaded', function () {
                             const searchInput = document.getElementById('searchInput');
+                            const view_details_btn = document.getElementById()
                             const rows = document.querySelectorAll('#timesheets-table tbody tr');
 
                             searchInput.addEventListener('keyup', function (event) {
