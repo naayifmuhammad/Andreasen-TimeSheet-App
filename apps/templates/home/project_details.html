@@ -80,7 +80,7 @@
                                 {% for timesheet in timesheets %}
                                 <tr>
                                     <td>{{ timesheet.date }}</td>
-                                    <td>{{ timesheet.hours_worked }}</td>
+                                    <td>{{ timesheet.hours_worked }} hrs</td>
                                     <td>{{ timesheet.description }}</td>
                                     {% if user.is_staff %}
                                     <td>
