@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.contrib import messages
 from django.urls import reverse
-from .forms import TimesheetForm, ProjectForm
+from .forms import TimesheetForm, ProjectForm, EditProjectForm
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Project, Timesheet
 from django.db.models import Sum
@@ -184,7 +184,6 @@ def toggle_project_status(request, project_id):
 @login_required(login_url="/login/")
 def delete_project(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
-    print("delete now")
     project.delete()
     return redirect("manage_projects")
 
@@ -291,6 +290,31 @@ def update_email(request):
     
 
 
+#edit project details here
+@login_required(login_url="/login/")
+def edit_project(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    if request.method == 'POST':
+        form = EditProjectForm(request.POST)
+        if form.is_valid():
+            for field, value in form.cleaned_data.items():
+                if value is not None and value != '':
+                    setattr(project,field,value)
+            project.save()
+            messages.success(request, 'Project Updated Successfully.')  # Success message
+            msg = "Project Updated Successfully" 
+            return render(request, 'home/edit_project.html', {'form': form, 'project': project, 'msg' : msg})
+        else:
+            messages.error(request, 'Error submitting the edit. Please correct the form errors.')  # Error message
+            print(form.errors)  # Print form errors to console for debugging
+    else:
+        form = EditProjectForm()
+
+    return render(request, 'home/edit_project.html', {'form': form, 'project': project})
+
+
+
 
 
 @login_required(login_url="/login/")
@@ -308,7 +332,6 @@ def make_admin(request, employee_id):
     employee = get_object_or_404(User, pk=employee_id)
     employee.is_staff = not employee.is_staff
     employee.save()
-    print("request: ",request.user.id,"id : ",employee.id)
     if request.user.id == employee.id:
         return redirect("/login/")
     return redirect("manage_employees")

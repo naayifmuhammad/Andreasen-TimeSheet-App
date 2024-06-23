@@ -1,0 +1,35 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Edit Project{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container">
+        <div class="row ">
+            <div class="col-md-6 offset-md-3 ">
+                <div class="card">
+                    <div class="card-header text-center py-4">
+                        <h4 class="title">Edit {{project.name}}</h4>
+                        <h6 class="card-category">
+                            {% if msg %}
+                                <span class="text-danger">{{ msg|safe }}</span>
+                            {% else %}
+                                <span class="text-info">Fill only the fields you want to update</span>    
+                            {% endif %} 
+                        </h6>
+                    </div>
+                    <form method="post" action="{% url 'edit_project' project_id=project.id%}">
+                        {% csrf_token %}
+                        <div class="card-body px-5 py-3">
+                            {{ form.as_p }}
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -95,11 +95,20 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a name="delete_projects_btn_grp"
-                                            href="{% url 'delete_project' project_id=project.id %}"
+                                        {% if user.is_superuser %}
+                                        <a name="delete_projects_btn_grp" href="{% url 'delete_project' project_id=project.id %}"
                                             class="extendedbtn btn btn-danger w-100">
-                                            Delete Project
+                                            Delete
                                         </a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_staff %}
+                                        <a href="{% url 'edit_project' project_id=project.id %}"
+                                            class="extendedbtn btn btn-primary w-100">
+                                            Edit
+                                        </a>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% empty %}

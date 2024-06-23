@@ -32,6 +32,26 @@ class ProjectForm(forms.ModelForm):
         self.fields['end_date'].input_formats = ['%Y-%m-%d']
 
 
+class EditProjectForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['code', 'name', 'description', 'start_date', 'end_date']
+        widgets = {
+            'code': forms.TextInput(attrs={'placeholder': 'ff-NNNN', 'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super(EditProjectForm, self).__init__(*args, **kwargs)
+        self.fields['start_date'].input_formats = ['%Y-%m-%d']
+        self.fields['end_date'].input_formats = ['%Y-%m-%d']
+        for field in self.fields.values():
+            field.required = False
+
+
 class EmployeeCreationForm(UserCreationForm):
     username = forms.CharField(
         widget=forms.TextInput(
