@@ -1,8 +1,3 @@
-# -*- encoding: utf-8 -*-
-"""
-Copyright (c) 2019 - present AppSeed.us
-"""
-
 import os, environ
 
 env = environ.Env(
@@ -98,7 +93,6 @@ else:
             'NAME': 'db.sqlite3',
         }
     }
-
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 

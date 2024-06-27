@@ -3,6 +3,13 @@ from django.db import models
 from django.db import models
 from django.conf import settings
 
+
+class Team(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
 class Project(models.Model):
     code = models.CharField(default="",max_length=255,unique=True)
     name = models.CharField(max_length=255)
@@ -23,3 +30,4 @@ class Timesheet(models.Model):
 
     def __str__(self):
         return f"{self.employee.username} - {self.project.name} - {self.date}"
+    

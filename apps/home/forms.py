@@ -1,5 +1,5 @@
 from django import forms 
-from .models import Timesheet, Project
+from .models import Timesheet, Project, Team
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 
@@ -81,6 +81,12 @@ class EmployeeCreationForm(UserCreationForm):
                 "class": "form-control"
             }
         ))
+    team = forms.ModelChoiceField(queryset=Team.objects.all(),
+                                  widget=forms.Select(
+                                      attrs={'class' : 'form-control'}
+                                  ),
+                                  empty_label='Choose a team'
+                                  )
 
     def save(self, commit=True):
         user = super().save(commit=False)

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login,logout
 from .forms import LoginForm, SignUpForm
 from django.views.decorators.cache import never_cache
+from apps.home.models import Project
 
 
 @never_cache

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Project, Timesheet
+from .models import Project, Timesheet, Team
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -14,3 +14,8 @@ class TimesheetAdmin(admin.ModelAdmin):
     list_display = ('employee', 'project', 'date', 'hours_worked')
     search_fields = ('employee__username', 'project__name')
     list_filter = ('date', 'project')
+
+@admin.register(Team)
+class Teams(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)    
