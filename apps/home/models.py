@@ -17,6 +17,7 @@ class Project(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    team = models.ForeignKey(Team,on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name

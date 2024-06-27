@@ -1,7 +1,11 @@
 <footer class="footer">
     <div class="container-fluid">
         <div class="copyright">
-            &copy; <a target="_blank" href="https://www.aengginc.com/">Andreasen Engineering, Inc.</a>
+            &copy; <a target="_blank" href="">        {% if user.is_superuser %}
+                Admin
+                {% else %}
+                {{user.team.name}}
+                {% endif %}</a>
         </div>
     </div>
 </footer>

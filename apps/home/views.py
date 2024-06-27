@@ -9,6 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Project, Timesheet
 from django.db.models import Sum
 from django.utils.timezone import now
+from .forms import EmployeeCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -124,9 +125,14 @@ def project_details(request,project_id):
 
 @login_required(login_url="/login/")
 def projects_tab(request):
-    active_projects = Project.objects.filter(is_active=True)
+    if request.user.is_superuser:
+        active_projects = Project.objects.filter(is_active=True).all()
+        inactive_projects = Project.objects.filter(is_active=False).all()
+    else:
+        active_projects = Project.objects.filter(team = request.user.team).filter(is_active = True)
+        inactive_projects = Project.objects.filter(team = request.user.team).filter(is_active = False)
     
-    inactive_projects = Project.objects.filter(is_active=False)
+    
 
     active_project_count = active_projects.count()
     inactive_project_count = inactive_projects.count()
@@ -142,8 +148,10 @@ def projects_tab(request):
 
 @login_required(login_url="/login/")
 def old_projects(request):
-    
-    inactive_projects = Project.objects.filter(is_active=False)
+    if request.user.is_superuser:
+        inactive_projects = Project.objects.filter(is_active=False)
+    else:
+        inactive_projects = Project.objects.filter(team = request.user.team).filter(is_active = False)
     inactive_project_count = inactive_projects.count()
 
     context = {
@@ -156,7 +164,7 @@ def old_projects(request):
 @login_required(login_url="/login/")
 def manage_projects(request):
     
-    projects = Project.objects.all()
+    projects = Project.objects.all() if request.user.is_superuser else Project.objects.filter(team = request.user.team)
     project_count = projects.count()
     active = projects.filter(is_active=True).count()
     inactive = projects.filter(is_active=False).count()
@@ -178,6 +186,7 @@ def toggle_project_status(request, project_id):
     else:
         project.end_date = None
     project.save()
+
     return redirect("manage_projects")
 
 
@@ -191,12 +200,12 @@ def delete_project(request, project_id):
 @login_required(login_url="/login/")
 def create_project(request):
     if request.method == 'POST':
-        form = ProjectForm(request.POST)
+        form = ProjectForm(request.POST,user=request.user)
         if form.is_valid():
             form.save()
             return redirect('projects_tab')  # Redirect to a success page or another view
     else:
-        form = ProjectForm()
+        form = ProjectForm(user = request.user)
     return render(request, 'home/new-project.html', {'form': form})
 
 
@@ -316,10 +325,12 @@ def edit_project(request, project_id):
 
 
 
-
 @login_required(login_url="/login/")
 def manage_employees(request):
-    all = User.objects.exclude(id=request.user.id).exclude(is_superuser = True).all()
+    if request.user.is_superuser:
+        all = User.objects.exclude(id=request.user.id).exclude(is_superuser = True).all()
+    else:
+        all = User.objects.exclude(id=request.user.id).exclude(is_superuser = True).filter(team=request.user.team).all()
     context = {
         'all' : all,
     }
@@ -337,7 +348,6 @@ def make_admin(request, employee_id):
     return redirect("manage_employees")
 
 
-from .forms import EmployeeCreationForm
 
 @login_required(login_url="/login/")
 def add_employee(request):
@@ -345,12 +355,12 @@ def add_employee(request):
         return redirect('home')  # Non-staff users cannot access this view
 
     if request.method == 'POST':
-        form = EmployeeCreationForm(request.POST)
+        form = EmployeeCreationForm(request.POST,user=request.user)
         if form.is_valid():
             form.save()
             return redirect('manage_employees')  # Redirect to the employee list or another appropriate page
     else:
-        form = EmployeeCreationForm()
+        form = EmployeeCreationForm(user=request.user)
     
     return render(request, 'home/admin/add_employee.html', {'form': form})
 

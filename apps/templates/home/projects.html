@@ -76,7 +76,11 @@
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Start Date</th>
-                                    <th>End Date</th>
+                                    {% if user.is_superuser %}
+                                    <th>Team</th>
+                                    {% else %}
+                                    <th>End date</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -86,7 +90,11 @@
                                     <td>{{ project.name }}</td>
                                     <td>{{ project.description }}</td>
                                     <td>{{ project.start_date }}</td>
+                                    {% if user.is_superuser %}
+                                    <td>{{ project.team }}</td>
+                                    {% else %}
                                     <td>{{ project.end_date }}</td>
+                                    {% endif %}
                                 </tr>
                                 {% empty %}
                                 <tr>
