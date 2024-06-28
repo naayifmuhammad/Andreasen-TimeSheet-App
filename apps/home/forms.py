@@ -18,7 +18,7 @@ class TimesheetForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     team = forms.ModelChoiceField(queryset=Team.objects.all(),
                                   widget=forms.Select(
-                                      attrs={'class' : 'form-control'}
+                                      attrs={'class' : 'form-control option-background'}
                                   ),
                                   empty_label='Assign to a team'
                                   )
