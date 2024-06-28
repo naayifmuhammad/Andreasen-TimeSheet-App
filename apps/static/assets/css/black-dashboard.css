@@ -13355,3 +13355,11 @@ Copyright (c) 2015 Daniel Eden
   font-size: 20px;
   font-weight: bold;
 }
+.option-background{
+  background-color: white;
+  color: black;
+}
+.option-background option{
+  background-color: white;
+  color: black;
+}

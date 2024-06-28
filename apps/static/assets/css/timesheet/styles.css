@@ -28,3 +28,6 @@
 .smaller{
     width: 200px;
 }
+.form-control .option-background option{
+    visibility: hidden !important;
+}

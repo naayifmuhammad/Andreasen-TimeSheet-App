@@ -96,7 +96,7 @@ class EmployeeCreationForm(UserCreationForm):
         ))
     team = forms.ModelChoiceField(queryset=Team.objects.all(),
                                   widget=forms.Select(
-                                      attrs={'class' : 'form-control'}
+                                      attrs={'class' : 'form-control option-background'}
                                   ),
                                   empty_label='Assign to a team'
                                   )
