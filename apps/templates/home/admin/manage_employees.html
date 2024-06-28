@@ -25,6 +25,9 @@
                                     <th>id</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    {% if user.is_superuser %}
+                                    <th>Team</th>
+                                    {% endif %}
                                     <th>Action</th>
                                     <th></th>
                                 </tr>
@@ -35,6 +38,9 @@
                                     <td>{{ employee.id }}</td>
                                     <td>{{ employee.username }}</td>
                                     <td>{{ employee.email }}</td>
+                                    {% if user.is_superuser %}
+                                    <td>{{ employee.team }}</td>
+                                    {% endif %}
                                     <td class="emp_btn_container">
                                         {% if employee.is_staff %}
                                             <a href="{% url 'make_admin' employee_id=employee.id %}" class="extendedbtn btn btn-danger w-100">Make employee</a>

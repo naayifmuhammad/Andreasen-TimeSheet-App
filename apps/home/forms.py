@@ -100,6 +100,8 @@ class EmployeeCreationForm(UserCreationForm):
                                   ),
                                   empty_label='Assign to a team'
                                   )
+    
+    
 
     def __init__(self, *args, **kwargs):
        self.user = kwargs.pop('user',None)
@@ -117,4 +119,5 @@ class EmployeeCreationForm(UserCreationForm):
         user.team = self.cleaned_data['team']
         if commit:
             user.save()
+            print("User's team = ",user.team)
         return user
