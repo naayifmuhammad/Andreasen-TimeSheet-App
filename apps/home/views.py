@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.urls import reverse
 from .forms import TimesheetForm, ProjectForm, EditProjectForm
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Project, Timesheet
+from .models import Project, Timesheet, Team
 from django.db.models import Sum
 from django.utils.timezone import now
 from .forms import EmployeeCreationForm
@@ -128,6 +128,7 @@ def projects_tab(request):
     if request.user.is_superuser:
         active_projects = Project.objects.filter(is_active=True).all()
         inactive_projects = Project.objects.filter(is_active=False).all()
+        teams = Team.objects.all()
     else:
         active_projects = Project.objects.filter(team = request.user.team).filter(is_active = True)
         inactive_projects = Project.objects.filter(team = request.user.team).filter(is_active = False)
@@ -141,6 +142,8 @@ def projects_tab(request):
         'active_project_count': active_project_count,
         'inactive_project_count' : inactive_project_count,
     }
+    if request.user.is_superuser:
+        context['teams'] = teams
 
     return render(request, 'home/projects.html', context)
 

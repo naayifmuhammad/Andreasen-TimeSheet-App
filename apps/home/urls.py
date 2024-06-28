@@ -20,9 +20,7 @@ urlpatterns = [
     path('project/edit/<int:project_id>/', views.edit_project, name='edit_project'),
 
     path('make_admin/<int:employee_id>/', views.make_admin, name='make_admin'),
-
-
-
+    
     path('active_projects/', views.timesheet, name='timesheet'),  # URL for timesheet page
     path('timesheet_entry/<int:project_id>/', views.timesheet_entry, name='timesheet_entry'),
     path('project_details/<int:project_id>/', views.project_details, name='project_details'),

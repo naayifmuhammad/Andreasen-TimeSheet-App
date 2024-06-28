@@ -63,9 +63,22 @@
           </div>
         <div class="col-md-12">
             <div class="card">
+                {% if not user.is_superuser %}
                 <div class="card-header">
                     <h4 class="card-title">Active Projects</h4>
                 </div>
+                {% else %}
+                <div class="filter-teams-dropdown col-5 pt-3">
+                    <select name="" class="form-group" id="teams-dropdown">
+                        <option value="" selected>All</option>
+                    {% for team in teams %}
+                        <option value='{{ team.name }}'>{{ team.name}}</option>
+                        {% empty %}
+                        <option value=''>Choose a team</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
                 <div class="card-body">
                     <div class="table-responsive">
                         <input type="text" id="searchInput" placeholder="Search..." class="form-control">
@@ -109,6 +122,8 @@
                         // JavaScript for client-side search
                         document.addEventListener('DOMContentLoaded', function() {
                             const searchInput = document.getElementById('searchInput');
+                            const dropDown = document.getElementById('teams-dropdown')
+
                             const rows = document.querySelectorAll('#active-projects-table tbody tr');
                     
                             searchInput.addEventListener('keyup', function(event) {
@@ -126,6 +141,22 @@
                                     row.style.display = found ? '' : 'none';
                                 });
                             });
+                            dropDown.addEventListener('change', function(event) {
+                                const term = event.target.value.toLowerCase();
+                                rows.forEach(row => {
+                                    const columns = row.getElementsByTagName('td');
+                                    let found = false;
+                                    for (let i = 0; i < columns.length; i++) {
+                                        const text = columns[i].textContent.toLowerCase();
+                                        if (text.includes(term)) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    row.style.display = found ? '' : 'none';
+                                });
+                            });
+                          
                         });
                     </script>
                     
