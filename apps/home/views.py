@@ -10,9 +10,9 @@ from .models import Project, Timesheet, Team
 from django.db.models import Sum
 from django.utils.timezone import now
 from .forms import EmployeeCreationForm
-from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from apps.authentication.models import CustomUser as User
 
 
 

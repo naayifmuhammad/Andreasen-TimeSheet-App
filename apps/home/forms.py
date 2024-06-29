@@ -3,7 +3,7 @@ from django import forms
 from .models import Timesheet, Project, Team
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
-
+from apps.authentication.models import CustomUser
 
 class TimesheetForm(forms.ModelForm):
     class Meta:
@@ -66,6 +66,9 @@ class EditProjectForm(forms.ModelForm):
 
 
 class EmployeeCreationForm(UserCreationForm):
+    class Meta:
+       model = CustomUser
+       fields = ('username', 'email', 'password1', 'password2', 'team')
     username = forms.CharField(
         widget=forms.TextInput(
             attrs={
