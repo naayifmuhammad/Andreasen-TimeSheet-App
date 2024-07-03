@@ -69,7 +69,7 @@
                 </div>
                 {% else %}
                 <div class="filter-teams-dropdown col-5 pt-3">
-                    <select name="" class="form-group" id="teams-dropdown">
+                    <select name="" class="form-control option-background col-5" id="teams-dropdown">
                         <option value="" selected>All</option>
                     {% for team in teams %}
                         <option value='{{ team.name }}'>{{ team.name}}</option>
