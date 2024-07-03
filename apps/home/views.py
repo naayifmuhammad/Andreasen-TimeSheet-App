@@ -67,7 +67,7 @@ def create_timesheet(request):
 
 @login_required(login_url="/login/")
 def timesheet(request):
-    active_projects = Project.objects.filter(is_active=True)
+    active_projects = Project.objects.filter(is_active=True, team=request.user.team)
     context = {
         'active_projects': active_projects
     }
