@@ -1,0 +1,111 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} View Timesheet {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Weekly Timesheet ({{duration.start}} - {{duration.end}})</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive table-bordered">
+                        <!-- <input type="text" id="searchInput" placeholder="Search..." class="form-control"> -->
+                        <table class="table tablesorter" id="timesheets-table">
+                            <thead class="text-primary">
+                                <tr>
+                                    <th>Project ID</th>
+                                    <th>Name</th>
+                                    <th>Description of work</th>
+                                    <th id="mon">Mon</th>
+                                    <th id="tue">Tue</th>
+                                    <th id="wed">Wed</th>
+                                    <th id="thu">Thu</th>
+                                    <th id="fri">Fri</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for timesheet in timesheets %}
+                                <tr>
+                                    <td>{{ timesheet.project.code }}</td>
+                                    <td>{{ timesheet.project.name }}</td>
+                                    <td>{{ timesheet.description }}</td>
+                                    <td name="mon">{% if timesheet.day == "Monday" %} {{timesheet.hours_worked}} {% endif %}</td>
+                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}}{% endif %}</td>
+                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}}{% endif %}</td>
+                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% endif %}</td>
+                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% endif %}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No active projects found.</td>
+                                </tr>
+                                {% endfor %}
+                                <tr id="calculated-row">
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th colspan="8" id="weekly_total" style="text-align: right;"></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% if user.is_staff %}
+                        <div class="button-container d-flex flex-row-reverse">
+                            <a href="{% url 'export_timesheet' duration.start duration.end %}" class="btn btn-primary">Export Timesheet</a>
+                        </div>
+                        {% endif %}
+                    </div>
+    
+                    <script>
+                        let weekly_total = 0
+                        document.addEventListener('DOMContentLoaded', function () 
+                        {
+                            // Calculate sums for each day column
+                            countColumnValues(3);
+                            countColumnValues(4);
+                            countColumnValues(5);
+                            countColumnValues(6);
+                            countColumnValues(7);
+                            document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + weekly_total + " hours"
+                        });
+
+                        function countColumnValues(columnIndex) {
+                            let table = document.getElementById("timesheets-table");
+                            let rowCount = table.rows.length - 1;
+                            let count = 0;
+
+                            for (let i = 1; i < rowCount - 1; i++) {  // Start from 1 to skip the header and end before the last row
+                                let cell = table.rows[i].cells[columnIndex];
+                                if (cell) {
+                                    count += parseFloat(cell.innerText) || 0;
+                                }
+                            }
+
+                            let finalCell = table.rows[rowCount - 1].cells[columnIndex];
+                            finalCell.innerText = count + " hours";
+                            weekly_total += count;
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

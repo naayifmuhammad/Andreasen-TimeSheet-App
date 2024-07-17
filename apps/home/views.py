@@ -13,7 +13,13 @@ from .forms import EmployeeCreationForm
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.authentication.models import CustomUser as User
-
+from .date_fetcher import *
+from django.http import HttpResponse
+from datetime import datetime
+import pandas as pd # type: ignore
+from openpyxl import Workbook # type: ignore
+from django.http import HttpResponse
+import csv
 
 
 @login_required(login_url="/login/")
@@ -65,6 +71,22 @@ def create_timesheet(request):
     return render(request, 'home/timesheet.html', {'form': form})
 
 
+
+@login_required(login_url="/login/")
+def view_weekly_timesheet(request):
+    timesheets = Timesheet.objects.filter(employee=request.user).order_by('date')
+    for timesheet in timesheets:
+        timesheet.day = timesheet.date.strftime("%A")
+    
+    active_projects = Project.objects.filter(is_active=True, team=request.user.team)
+    context = {
+        'active_projects': active_projects,
+        'timesheets' : timesheets,
+        'duration' : get_work_week(),
+    }
+    return render(request, 'home/weekly_timesheet.html', context)
+
+
 @login_required(login_url="/login/")
 def timesheet(request):
     active_projects = Project.objects.filter(is_active=True, team=request.user.team)
@@ -72,6 +94,38 @@ def timesheet(request):
         'active_projects': active_projects
     }
     return render(request, 'home/timesheet.html', context)
+
+
+@login_required(login_url="/login/")
+
+
+def export_timesheet(request, start_date, end_date):
+    print("\n\nYep got here\n\n")
+
+    start_date = datetime.strptime(start_date, "%d-%m-%y")
+    end_date = datetime.strptime(end_date, "%d-%m-%y") + timedelta(days=1)  # Adjust end date to be inclusive
+    timesheets = Timesheet.objects.filter(employee=request.user, date__range=(start_date, end_date)).order_by('date')
+    weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="timesheet_export_{start_date.strftime("%d-%m-%y")} - {end_date.strftime("%d-%m-%y")}.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Project ID', 'Project Name', 'Description of work', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
+
+    for timesheet in timesheets:
+        project_id = timesheet.project.code
+        project_name = timesheet.project.name
+        description = timesheet.description
+        Monday = timesheet.hours_worked if timesheet.date.strftime("%A") == "Monday" else 0
+        Tuesday = timesheet.hours_worked if timesheet.date.strftime("%A") == "Tuesday" else 0
+        Wednesday = timesheet.hours_worked if timesheet.date.strftime("%A") == "Wednesday" else 0
+        Thursday = timesheet.hours_worked if timesheet.date.strftime("%A") == "Thursday" else 0
+        Friday = timesheet.hours_worked if timesheet.date.strftime("%A") == "Friday" else 0
+        writer.writerow([project_id, project_name, description, Monday, Tuesday,Wednesday,Thursday,Friday])
+    return response
+
+
 
 
 @login_required(login_url="/login/")
@@ -215,10 +269,25 @@ def create_project(request):
 @login_required(login_url="/login/")
 def timesheet_entry(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
+
+    
     
     form = TimesheetForm()
+
+    week_dates = get_current_week_dates()
+    week = {
+        'start' : week_dates[0],
+        'end' : week_dates[-1],
+    }
+
+
+    context = {
+        'form': form,
+        'project' : project,
+        'week' : week,
+    }
     
-    return render(request, 'home/new-timesheet-entry.html', {'form': form, 'project': project})
+    return render(request, 'home/new-timesheet-entry.html', context)
 
 
 @login_required(login_url="/login/")

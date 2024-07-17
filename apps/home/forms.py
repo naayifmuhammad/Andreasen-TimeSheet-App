@@ -3,16 +3,27 @@ from django import forms
 from .models import Timesheet, Project, Team
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
+from django.core.validators import MaxValueValidator
 from apps.authentication.models import CustomUser
+from .date_fetcher import fetchWeekDropdown
 
 class TimesheetForm(forms.ModelForm):
+    date = forms.ChoiceField(
+        choices=fetchWeekDropdown(),
+        widget=forms.Select(
+            attrs={'class': 'form-control option-background col-2'}
+        ),
+        label='Choose day'
+    )
+
     class Meta:
         model = Timesheet
         fields = ['date', 'hours_worked', 'description']
+        validators = [MaxValueValidator(24)]
+        max_digits = 2,
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date','class':'form-control smaller','value': timezone.now().date()}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'hours_worked': forms.NumberInput(attrs={'type':'number','class':'form-control smaller'})
+            'hours_worked': forms.NumberInput(attrs={'type': 'number', 'class': 'form-control smaller'}),
         }
 
 class ProjectForm(forms.ModelForm):

@@ -28,12 +28,19 @@
                     </a>
                 </li>
 
+                <li class="{% if 'index' in segment %} active {% endif %} ">
+                    <a href="{% url 'view_weekly_timesheet' %}">
+                        <i class="tim-icons icon-simple-add"></i>
+                        <p>TimeSheet reports</p>
+                    </a>
+                </li>
 
                 {% if not user.is_staff %}
+
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'timesheet' %}">
-                        <i class="tim-icons icon-simple-add"></i>
-                        <p>Timesheet</p>
+                        <i class="tim-icons icon-notes"></i>
+                        <p>Edit Timesheet</p>
                     </a>
                 </li>
 
