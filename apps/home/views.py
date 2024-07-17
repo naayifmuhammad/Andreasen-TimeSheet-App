@@ -74,10 +74,10 @@ def create_timesheet(request):
 
 @login_required(login_url="/login/")
 def view_weekly_timesheet(request):
-    timesheets = Timesheet.objects.filter(employee=request.user).order_by('date')
+    timesheets = Timesheet.objects.all().order_by('employee') if request.user.is_staff else Timesheet.objects.filter(employee=request.user).order_by('date')
     for timesheet in timesheets:
         timesheet.day = timesheet.date.strftime("%A")
-    
+
     active_projects = Project.objects.filter(is_active=True, team=request.user.team)
     context = {
         'active_projects': active_projects,
@@ -100,11 +100,12 @@ def timesheet(request):
 
 
 def export_timesheet(request, start_date, end_date):
-    print("\n\nYep got here\n\n")
 
     start_date = datetime.strptime(start_date, "%d-%m-%y")
     end_date = datetime.strptime(end_date, "%d-%m-%y") + timedelta(days=1)  # Adjust end date to be inclusive
-    timesheets = Timesheet.objects.filter(employee=request.user, date__range=(start_date, end_date)).order_by('date')
+    timesheets = Timesheet.objects.filter(date__range=(start_date, end_date)).order_by('date')
+    #test
+    print(start_date-end_date)
     weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
     response = HttpResponse(content_type='text/csv')
@@ -112,6 +113,7 @@ def export_timesheet(request, start_date, end_date):
     
     writer = csv.writer(response)
     writer.writerow(['Project ID', 'Project Name', 'Description of work', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
+
 
     for timesheet in timesheets:
         project_id = timesheet.project.code

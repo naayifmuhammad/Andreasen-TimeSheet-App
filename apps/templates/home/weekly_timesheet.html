@@ -36,11 +36,11 @@
                                     <td>{{ timesheet.project.code }}</td>
                                     <td>{{ timesheet.project.name }}</td>
                                     <td>{{ timesheet.description }}</td>
-                                    <td name="mon">{% if timesheet.day == "Monday" %} {{timesheet.hours_worked}} {% endif %}</td>
-                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}}{% endif %}</td>
-                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}}{% endif %}</td>
-                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% endif %}</td>
-                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% endif %}</td>
+                                    <td name="mon">{% if timesheet.day == "Monday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
+                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
+                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
