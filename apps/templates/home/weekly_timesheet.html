@@ -31,7 +31,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for timesheet in timesheets %}
+                                <tr><td colspan="8" class="text-center text-uppercase card-title">Last Week</td></tr>
+
+                                {% for timesheet in timesheets.previous_week %}
                                 <tr>
                                     <td>{{ timesheet.project.code }}</td>
                                     <td>{{ timesheet.project.name }}</td>
@@ -43,10 +45,23 @@
                                     <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
                                 </tr>
                                 {% empty %}
-                                <tr>
-                                    <td colspan="8" class="text-center">No active projects found.</td>
-                                </tr>
                                 {% endfor %}
+                                
+                                <tr><td colspan="8" class="text-center text-uppercase card-title">Current Week</td></tr>
+                                {% for timesheet in timesheets.current_week %}
+                                <tr>
+                                    <td>{{ timesheet.project.code }}</td>
+                                    <td>{{ timesheet.project.name }}</td>
+                                    <td>{{ timesheet.description }}</td>
+                                    <td name="mon">{% if timesheet.day == "Monday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
+                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
+                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                </tr>
+                                {% empty %}
+                                {% endfor %}
+
                                 <tr id="calculated-row">
                                     <td></td>
                                     <td></td>

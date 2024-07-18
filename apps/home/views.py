@@ -73,16 +73,41 @@ def create_timesheet(request):
 
 
 @login_required(login_url="/login/")
-def view_weekly_timesheet(request):
-    timesheets = Timesheet.objects.all().order_by('employee') if request.user.is_staff else Timesheet.objects.filter(employee=request.user).order_by('date')
-    for timesheet in timesheets:
+def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None):
+    
+    if not pStart:
+        pStart = getTimePeriods()['pStart']
+
+    if not pEnd:
+        pEnd = getTimePeriods()['pEnd']
+    if not cStart:
+        cStart = getTimePeriods()['cStart']
+
+    if not cEnd:
+        cEnd = getTimePeriods()['cEnd']
+    
+    print(f"\n\n\n pstart : {pStart.strftime('%d,%m,%y')}, pend {pEnd.strftime('%d,%m,%y')}, cstart {cStart.strftime('%d,%m,%y')}, cend {cEnd.strftime('%d,%m,%y')} \n\n\n")
+
+    #timesheets = Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user).order_by('date')
+    
+    previous_week_timesheets =  Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
+    current_week_timesheets =  Timesheet.objects.filter(date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
+    
+    # print("\n\nPrevious timesheets: \n",previous_week_timesheets)
+    # print("\n\Current timesheets: \n",current_week_timesheets)
+
+    for timesheet in previous_week_timesheets:
         timesheet.day = timesheet.date.strftime("%A")
+    for timesheet in current_week_timesheets:
+        timesheet.day = timesheet.date.strftime("%A")
+
+
 
     active_projects = Project.objects.filter(is_active=True, team=request.user.team)
     context = {
         'active_projects': active_projects,
-        'timesheets' : timesheets,
-        'duration' : get_work_week(),
+        'timesheets' : {'previous_week' : previous_week_timesheets, 'current_week': current_week_timesheets},
+        'duration' : {'start': pStart.strftime('%d-%m-%y'),'end' : cEnd.strftime('%d-%m-%y')},
     }
     return render(request, 'home/weekly_timesheet.html', context)
 
