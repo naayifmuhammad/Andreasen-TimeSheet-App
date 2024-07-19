@@ -125,8 +125,15 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
     if not cEnd:
         cEnd = getTimePeriods()['cEnd']
     
-    previous_week_timesheets =  Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
-    current_week_timesheets =  Timesheet.objects.filter(date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
+    if request.user.is_superuser:
+        previous_week_timesheets = Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
+        current_week_timesheets = Timesheet.objects.filter(date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
+    elif request.user.is_staff:
+        previous_week_timesheets = Timesheet.objects.filter(project__team=request.user.team,date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
+        current_week_timesheets = Timesheet.objects.filter(project__team=request.user.team,date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
+    else:
+        previous_week_timesheets = Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
+        current_week_timesheets = Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
 
     for timesheet in previous_week_timesheets:
         timesheet.day = timesheet.date.strftime("%A")
