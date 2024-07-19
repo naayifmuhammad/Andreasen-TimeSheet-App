@@ -70,7 +70,30 @@ def create_timesheet(request):
         form = TimesheetForm()
     return render(request, 'home/timesheet.html', {'form': form})
 
+#latest - to export project based timesheet. triggered from project details page of admin
+@login_required(login_url="/login/")
+def export_project_based_timesheet_summary(request,project_id=None, pStart=None,pEnd=None, cStart=None, cEnd=None):
 
+    project = get_object_or_404(Project, pk=project_id)
+    
+    if not pStart:
+        pStart = getTimePeriods()['pStart']
+    if not pEnd:
+        pEnd = getTimePeriods()['pEnd']
+    if not cStart:
+        cStart = getTimePeriods()['cStart']
+    if not cEnd:
+        cEnd = getTimePeriods()['cEnd']
+    
+    if request.user.is_staff:
+        previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') #else Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
+        current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') #if request.user.is_staff #else Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
+    context = {
+    'project' : project,
+    'timesheets' : {'previous_week' : previous_week_timesheets, 'current_week': current_week_timesheets},
+    'duration' : {'pStart' : pStart.strftime('%d-%m-%y'), 'pEnd' : pEnd.strftime('%d-%m-%y'), 'cStart':cStart.strftime('%d-%m-%y'), 'cEnd': cEnd.strftime('%d-%m-%y')},
+    }
+    return render(request, 'home/report_template.html', context)
 
 @login_required(login_url="/login/")
 def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None):
@@ -85,10 +108,6 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
 
     if not cEnd:
         cEnd = getTimePeriods()['cEnd']
-    
-    print(f"\n\n\n pstart : {pStart.strftime('%d,%m,%y')}, pend {pEnd.strftime('%d,%m,%y')}, cstart {cStart.strftime('%d,%m,%y')}, cend {cEnd.strftime('%d,%m,%y')} \n\n\n")
-
-    #timesheets = Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user).order_by('date')
     
     previous_week_timesheets =  Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
     current_week_timesheets =  Timesheet.objects.filter(date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')

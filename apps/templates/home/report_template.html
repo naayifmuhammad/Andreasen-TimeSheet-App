@@ -1,0 +1,72 @@
+{% extends "layouts/base-report.html" %}
+
+{% block title %} View Timesheet {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">{% if user.team %} {{ user.team }} {% endif %}{% if user.is_superuser %}ANDREASEN ENGINEERING INC.{% endif %}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive table-bordered overflow-hidden">
+                        <table class="table tablesorter" id="timesheets-table">
+                            <thead class="text-primary">
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Description of work</th>
+                                    <th>Hours put in</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% if timesheet.previous_week|length > 0 %}
+                            <tr>
+                                <td colspan="8" class="text-center text-uppercase card-title">{{duration.pStart}} to {{duration.pEnd}}</td>
+                            </tr>
+                            
+                            {% for timesheet in timesheets.previous_week %}
+                            <tr>
+                                <td>{{ timesheet.employee }}</td>
+                                <td>{{ timesheet.description }}</td>
+                                <td>{{ timesheet.hours_worked }}</td>
+                            </tr>
+                            {% empty %}
+                            {% endfor %}
+                            {% endif %}
+                                <tr><td colspan="8" class="text-center text-uppercase card-title">{{duration.cStart}} to {{duration.cEnd}}</td></tr>
+                                {% for timesheet in timesheets.current_week %}
+                                <tr>
+                                    <td>{{ timesheet.employee }}</td>
+                                    <td>{{ timesheet.description }}</td>
+                                    <td>{{ timesheet.hours_worked }}</td>
+                                    </tr>
+                                {% empty %}
+                                {% endfor %}
+
+                                <tr id="calculated-row">
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <th colspan="8" id="weekly_total" style="text-align: right;"></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
