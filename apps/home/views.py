@@ -22,6 +22,8 @@ from django.http import HttpResponse
 import csv
 
 
+
+
 @login_required(login_url="/login/")
 def index(request):
     context = {'segment': 'index'}
@@ -86,14 +88,22 @@ def export_project_based_timesheet_summary(request,project_id=None, pStart=None,
         cEnd = getTimePeriods()['cEnd']
     
     if request.user.is_staff:
-        previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') #else Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
-        current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') #if request.user.is_staff #else Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
+        previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
+        current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
+        previous_week_total_time_worked = current_week_total_time_worked = 0
+        if previous_week_timesheets:
+            previous_week_total_time_worked = previous_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours'] > 0 
+        if current_week_timesheets:
+            current_week_total_time_worked = current_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours']
+
     context = {
     'project' : project,
     'timesheets' : {'previous_week' : previous_week_timesheets, 'current_week': current_week_timesheets},
     'duration' : {'pStart' : pStart.strftime('%d-%m-%y'), 'pEnd' : pEnd.strftime('%d-%m-%y'), 'cStart':cStart.strftime('%d-%m-%y'), 'cEnd': cEnd.strftime('%d-%m-%y')},
+    'total' : {'previous' : previous_week_total_time_worked, 'current': current_week_total_time_worked}
     }
     return render(request, 'home/report_template.html', context)
+
 
 @login_required(login_url="/login/")
 def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None):
@@ -111,9 +121,6 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
     
     previous_week_timesheets =  Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
     current_week_timesheets =  Timesheet.objects.filter(date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') if request.user.is_staff else Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
-    
-    # print("\n\nPrevious timesheets: \n",previous_week_timesheets)
-    # print("\n\Current timesheets: \n",current_week_timesheets)
 
     for timesheet in previous_week_timesheets:
         timesheet.day = timesheet.date.strftime("%A")
