@@ -16,10 +16,14 @@ from apps.authentication.models import CustomUser as User
 from .date_fetcher import *
 from django.http import HttpResponse
 from datetime import datetime
-import pandas as pd # type: ignore
-from openpyxl import Workbook # type: ignore
+# import pandas as pd # type: ignore
+# from openpyxl import Workbook # type: ignore
 from django.http import HttpResponse
 import csv
+
+from .utils import generate_pdf
+
+
 
 
 
@@ -94,15 +98,17 @@ def export_project_based_timesheet_summary(request,project_id=None, pStart=None,
         if previous_week_timesheets:
             previous_week_total_time_worked = previous_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours'] > 0 
         if current_week_timesheets:
-            current_week_total_time_worked = current_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours']
+            current_week_total_time_worked = current_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours']    
 
     context = {
     'project' : project,
-    'timesheets' : {'previous_week' : previous_week_timesheets, 'current_week': current_week_timesheets},
+    'timesheets' : {'previous' : previous_week_timesheets, 'current': current_week_timesheets},
     'duration' : {'pStart' : pStart.strftime('%d-%m-%y'), 'pEnd' : pEnd.strftime('%d-%m-%y'), 'cStart':cStart.strftime('%d-%m-%y'), 'cEnd': cEnd.strftime('%d-%m-%y')},
     'total' : {'previous' : previous_week_total_time_worked, 'current': current_week_total_time_worked}
     }
-    return render(request, 'home/report_template.html', context)
+    filename = f"report-({pStart.strftime('%d-%m-%y')}-to{cEnd.strftime('%d-%m-%y')}).pdf"
+    
+    return generate_pdf(filename,**context)
 
 
 @login_required(login_url="/login/")
