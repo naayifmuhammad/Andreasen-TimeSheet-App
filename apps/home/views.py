@@ -114,16 +114,17 @@ def export_project_based_timesheet_summary(request,project_id=None, pStart=None,
 @login_required(login_url="/login/")
 def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None):
     
+    fetchedTimePeriods = getTimePeriods()
     if not pStart:
-        pStart = getTimePeriods()['pStart']
+        pStart = fetchedTimePeriods['pStart']
 
     if not pEnd:
-        pEnd = getTimePeriods()['pEnd']
+        pEnd = fetchedTimePeriods['pEnd']
     if not cStart:
-        cStart = getTimePeriods()['cStart']
+        cStart = fetchedTimePeriods['cStart']
 
     if not cEnd:
-        cEnd = getTimePeriods()['cEnd']
+        cEnd = fetchedTimePeriods['cEnd']
     
     if request.user.is_superuser:
         previous_week_timesheets = Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
@@ -141,14 +142,14 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
         timesheet.day = timesheet.date.strftime("%A")
 
 
-
     active_projects = Project.objects.filter(is_active=True, team=request.user.team)
     context = {
         'active_projects': active_projects,
-        'timesheets' : {'previous_week' : previous_week_timesheets, 'current_week': current_week_timesheets},
+        'timesheets' : [previous_week_timesheets, current_week_timesheets],
         'duration' : {'start': pStart.strftime('%d-%m-%y'),'end' : cEnd.strftime('%d-%m-%y')},
     }
-    return render(request, 'home/weekly_timesheet.html', context)
+    print("Teams:\n",context['timesheets'])
+    return render(request, 'home/bi-weekly_timesheet.html', context)
 
 
 @login_required(login_url="/login/")

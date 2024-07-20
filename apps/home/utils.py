@@ -1,10 +1,10 @@
 import io
 from django.http import HttpResponse
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph
+from reportlab.lib.pagesizes import letter #type:ignore   
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph #type:ignore  
+from reportlab.lib import colors #type:ignore 
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle #type:ignore
+from reportlab.platypus import Paragraph #type:ignore
 
 
 def generate_pdf(filename, project, timesheets, duration, total):
