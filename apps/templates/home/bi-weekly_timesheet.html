@@ -11,8 +11,11 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Weekly Timesheet ({{duration.start}} - {{duration.end}})</h4>
+                <div class="card-header d-flex justify-content-between">
+                    <h4 class="card-title">Biweekly Timesheet ({{duration.start}} - {{duration.end}})</h4>
+                    {% if user.is_staff %}
+                        <a href="{% url 'export_timesheet' duration.start duration.end %}" class="btn btn-primary">Export Timesheets</a>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="table-responsive table-bordered">
@@ -31,34 +34,22 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td colspan="8" class="text-center text-uppercase card-title">Last Week</td></tr>
-
-                                {% for timesheet in timesheets.previous_week %}
-                                <tr>
-                                    <td>{{ timesheet.project.code }}</td>
-                                    <td>{{ timesheet.project.name }}</td>
-                                    <td>{{ timesheet.description }}</td>
-                                    <td name="mon">{% if timesheet.day == "Monday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
-                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
-                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                </tr>
-                                {% empty %}
-                                {% endfor %}
-                                
-                                <tr><td colspan="8" class="text-center text-uppercase card-title">Current Week</td></tr>
-                                {% for timesheet in timesheets.current_week %}
-                                <tr>
-                                    <td>{{ timesheet.project.code }}</td>
-                                    <td>{{ timesheet.project.name }}</td>
-                                    <td>{{ timesheet.description }}</td>
-                                    <td name="mon">{% if timesheet.day == "Monday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
-                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
-                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                </tr>
+                                {% for week in timesheets %}
+                                    {% if week %}
+                                        {% for timesheet in week %}
+                                        <tr>
+                                            <td>{{ timesheet.project.code }}</td>
+                                            <td>{{ timesheet.project.name }}</td>
+                                            <td>{{ timesheet.description }}</td>
+                                            <td name="mon">{% if timesheet.day == "Monday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                            <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
+                                            <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
+                                            <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                            <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                        </tr>                                    
+                                        {% empty %}
+                                        {% endfor %}
+                                    {% endif %}
                                 {% empty %}
                                 {% endfor %}
 
@@ -77,11 +68,6 @@
                                 </tr>
                             </tbody>
                         </table>
-                        {% if user.is_staff %}
-                        <div class="button-container d-flex flex-row-reverse">
-                            <a href="{% url 'export_timesheet' duration.start duration.end %}" class="btn btn-primary">Export Timesheet</a>
-                        </div>
-                        {% endif %}
                     </div>
     
                     <script>
