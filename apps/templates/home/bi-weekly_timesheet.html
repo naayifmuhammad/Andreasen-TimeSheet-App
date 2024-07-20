@@ -11,8 +11,11 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Weekly Timesheet ({{duration.start}} - {{duration.end}})</h4>
+                <div class="card-header d-flex justify-content-between">
+                    <h4 class="card-title">Biweekly Timesheet ({{duration.start}} - {{duration.end}})</h4>
+                    {% if user.is_staff %}
+                        <a href="{% url 'export_timesheet' duration.start duration.end %}" class="btn btn-primary">Export Timesheets</a>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="table-responsive table-bordered">
@@ -65,11 +68,6 @@
                                 </tr>
                             </tbody>
                         </table>
-                        {% if user.is_staff %}
-                        <div class="button-container d-flex flex-row-reverse">
-                            <a href="{% url 'export_timesheet' duration.start duration.end %}" class="btn btn-primary">Export Timesheet</a>
-                        </div>
-                        {% endif %}
                     </div>
     
                     <script>

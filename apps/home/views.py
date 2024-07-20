@@ -21,10 +21,7 @@ from datetime import datetime
 from django.http import HttpResponse
 import csv
 
-from .utils import generate_pdf
-
-
-
+from .utils import generate_project_report, generate_employee_report
 
 
 
@@ -108,7 +105,7 @@ def export_project_based_timesheet_summary(request,project_id=None, pStart=None,
     }
     filename = f"report-({pStart.strftime('%d-%m-%y')}-to{cEnd.strftime('%d-%m-%y')}).pdf"
     
-    return generate_pdf(filename,**context)
+    return generate_project_report(filename,**context)
 
 
 @login_required(login_url="/login/")
