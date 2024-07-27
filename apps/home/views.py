@@ -16,12 +16,9 @@ from apps.authentication.models import CustomUser as User
 from .date_fetcher import *
 from django.http import HttpResponse
 from datetime import datetime
-# import pandas as pd # type: ignore
-# from openpyxl import Workbook # type: ignore
 from django.http import HttpResponse
 import csv
-
-from .utils import generate_project_report, generate_employee_report
+from .utils import generate_project_report, generate_employee_report, getBiWeeklyRanges
 
 
 
@@ -75,27 +72,30 @@ def create_timesheet(request):
 
 #latest - to export project based timesheet. triggered from project details page of admin
 @login_required(login_url="/login/")
-def export_project_based_timesheet_summary(request,project_id=None, pStart=None,pEnd=None, cStart=None, cEnd=None):
+def export_project_based_timesheet_summary(request,project_id=None, pStart=getTimePeriods()['pStart'],pEnd=getTimePeriods()['pEnd'], cStart=getTimePeriods()['cStart'], cEnd=getTimePeriods()['cEnd']):
 
     project = get_object_or_404(Project, pk=project_id)
     
-    if not pStart:
-        pStart = getTimePeriods()['pStart']
-    if not pEnd:
-        pEnd = getTimePeriods()['pEnd']
-    if not cStart:
-        cStart = getTimePeriods()['cStart']
-    if not cEnd:
-        cEnd = getTimePeriods()['cEnd']
+    #now we get this data directly from above by default
+
+    # if not pStart:
+    #     pStart = getTimePeriods()['pStart']
+    # if not pEnd:
+    #     pEnd = getTimePeriods()['pEnd']
+    # if not cStart:
+    #     cStart = getTimePeriods()['cStart']
+    # if not cEnd:
+    #     cEnd = getTimePeriods()['cEnd']
     
     if request.user.is_staff:
         previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
         current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
         previous_week_total_time_worked = current_week_total_time_worked = 0
         if previous_week_timesheets:
-            previous_week_total_time_worked = previous_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours'] > 0 
+            previous_week_total_time_worked = previous_week_timesheets.aggregate(p_total_hours=Sum('hours_worked'))['p_total_hours']
+            
         if current_week_timesheets:
-            current_week_total_time_worked = current_week_timesheets.aggregate(total_hours=Sum('hours_worked'))['total_hours']    
+            current_week_total_time_worked = current_week_timesheets.aggregate(c_total_hours=Sum('hours_worked'))['c_total_hours']    
 
     context = {
     'project' : project,
@@ -145,7 +145,6 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
         'timesheets' : [previous_week_timesheets, current_week_timesheets],
         'duration' : {'start': pStart.strftime('%d-%m-%y'),'end' : cEnd.strftime('%d-%m-%y')},
     }
-    print("Teams:\n",context['timesheets'])
     return render(request, 'home/bi-weekly_timesheet.html', context)
 
 
@@ -161,13 +160,14 @@ def timesheet(request):
 @login_required(login_url="/login/")
 
 
+
+#we don't need csv anymore
 def export_timesheet(request, start_date, end_date):
 
     start_date = datetime.strptime(start_date, "%d-%m-%y")
     end_date = datetime.strptime(end_date, "%d-%m-%y") + timedelta(days=1)  # Adjust end date to be inclusive
     timesheets = Timesheet.objects.filter(date__range=(start_date, end_date)).order_by('date')
     #test
-    print(start_date-end_date)
     weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
     response = HttpResponse(content_type='text/csv')
@@ -231,6 +231,7 @@ def project_details(request,project_id):
         'project': project,
         'timesheets': timesheets,
         'total_time': total_time,
+        'biweekly_ranges' : getBiWeeklyRanges(),
     }
     
     if request.user.is_staff: # only needed for staff
@@ -334,8 +335,6 @@ def create_project(request):
 def timesheet_entry(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
 
-    
-    
     form = TimesheetForm()
 
     week_dates = get_current_week_dates()
