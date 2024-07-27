@@ -59,7 +59,7 @@
                     <h4 class="card-title col-3">Timesheets for Project: {{ project.name }}</h4>
                     <form class="d-flex justify-content-end align-items-center col-9" method="post" id="date-range-form">
                         {% csrf_token %}
-                        <label for="date_range">Select Date Range:</label>
+                        <label for="date_range">Select Date Range to export:</label>
                         <select class="form-control option-background col-3 mr-5 ml-3" name="date_range" id="date_range">
                           {% for range in biweekly_ranges %}
 

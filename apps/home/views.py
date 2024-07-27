@@ -18,7 +18,7 @@ from django.http import HttpResponse
 from datetime import datetime
 from django.http import HttpResponse
 import csv
-from .utils import generate_project_report, generate_employee_report, getBiWeeklyRanges
+from .utils import generate_project_report, generate_employee_report, getBiWeeklyRanges, generate_week_ranges_from_given_startdate_till_date
 
 
 
@@ -70,26 +70,25 @@ def create_timesheet(request):
         form = TimesheetForm()
     return render(request, 'home/timesheet.html', {'form': form})
 
+
+
 #latest - to export project based timesheet. triggered from project details page of admin
 @login_required(login_url="/login/")
-def export_project_based_timesheet_summary(request,project_id=None, pStart=getTimePeriods()['pStart'],pEnd=getTimePeriods()['pEnd'], cStart=getTimePeriods()['cStart'], cEnd=getTimePeriods()['cEnd']):
+def export_project_based_timesheet_summary(request,project_id=None, start_date=None,end_date=None):
+
+    start_date = datetime.strptime(request.GET.get('start_date'),'%d/%m/%Y').date()
+    end_date = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
 
     project = get_object_or_404(Project, pk=project_id)
+    print("start_date is : ", start_date)
+    print("end date is : ", end_date)
     
-    #now we get this data directly from above by default
+    week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
 
-    # if not pStart:
-    #     pStart = getTimePeriods()['pStart']
-    # if not pEnd:
-    #     pEnd = getTimePeriods()['pEnd']
-    # if not cStart:
-    #     cStart = getTimePeriods()['cStart']
-    # if not cEnd:
-    #     cEnd = getTimePeriods()['cEnd']
-    
+
     if request.user.is_staff:
-        previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
-        current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
+        previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(week_ranges[0]['start'].strftime("%Y-%m-%d"),week_ranges[0]['end'].strftime("%Y-%m-%d"))).order_by('date')
+        current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(week_ranges[1]['start'].strftime("%Y-%m-%d"),week_ranges[1]['end'].strftime("%Y-%m-%d"))).order_by('date') 
         previous_week_total_time_worked = current_week_total_time_worked = 0
         if previous_week_timesheets:
             previous_week_total_time_worked = previous_week_timesheets.aggregate(p_total_hours=Sum('hours_worked'))['p_total_hours']
@@ -100,10 +99,10 @@ def export_project_based_timesheet_summary(request,project_id=None, pStart=getTi
     context = {
     'project' : project,
     'timesheets' : {'previous' : previous_week_timesheets, 'current': current_week_timesheets},
-    'duration' : {'pStart' : pStart.strftime('%d-%m-%y'), 'pEnd' : pEnd.strftime('%d-%m-%y'), 'cStart':cStart.strftime('%d-%m-%y'), 'cEnd': cEnd.strftime('%d-%m-%y')},
+    'duration' : {'pStart' : week_ranges[0]['start'].strftime('%d-%m-%y'), 'pEnd' : week_ranges[0]['end'].strftime('%d-%m-%y'), 'cStart':week_ranges[1]['start'].strftime('%d-%m-%y'), 'cEnd': week_ranges[1]['end'].strftime('%d-%m-%y')},
     'total' : {'previous' : previous_week_total_time_worked, 'current': current_week_total_time_worked}
     }
-    filename = f"report-({pStart.strftime('%d-%m-%y')}-to{cEnd.strftime('%d-%m-%y')}).pdf"
+    filename = f"report-({start_date.strftime('%d-%m-%y')}-to{end_date.strftime('%d-%m-%y')}).pdf"
     
     return generate_project_report(filename,**context)
 

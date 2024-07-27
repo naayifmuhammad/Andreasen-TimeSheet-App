@@ -15,23 +15,22 @@ from .models import Timesheet
 def get_monday_of_week(date):
     return date - timedelta(days=date.weekday())
 
-def generate_week_ranges_from_given_startdate_till_now(start_date=Timesheet.objects.earliest('date').date):
-    current_date = datetime.now().date()
+def generate_week_ranges_from_given_startdate_till_date(start_date=Timesheet.objects.earliest('date').date,end_date = datetime.now().date()):
     week_ranges = []
     start_of_week = get_monday_of_week(start_date)
-    while start_of_week <= current_date:
+    while start_of_week <= end_date:
         end_of_week = start_of_week + timedelta(days=4)
         week_ranges.append({"start": start_of_week , "end" : end_of_week})
         start_of_week += timedelta(days=7)
-
     return week_ranges
 
 def getBiWeeklyRanges():
     biweekly_ranges = []
-    weekranges = generate_week_ranges_from_given_startdate_till_now()
+    weekranges = generate_week_ranges_from_given_startdate_till_date()
     for week_index in range(len(weekranges)-1):
         biweekly_ranges.append({"biweekly_start":weekranges[week_index]['start'].strftime("%d/%m/%Y"),"biweekly_end":weekranges[week_index+1]['end'].strftime("%d/%m/%Y")})
 
+    print("bi weekly ranges = \n",biweekly_ranges)
     return biweekly_ranges[::-1]
 
 
