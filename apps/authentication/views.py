@@ -28,16 +28,6 @@ def login_view(request):
     return render(request, "accounts/login.html", {"form": form, "msg": msg})
 
 
-# def admin_dash(request):
-#     active_projects = Project.objects.filter(is_active=True)
-#     active_project_count = active_projects.count()
-#     context = {
-#         'active_projects': active_projects,
-#         'active_project_count': active_project_count,
-#     }
-#     return render(request, 'home/admin/admin_projects.html', context)
-
-
 def register_user(request):
     msg = None
     success = False

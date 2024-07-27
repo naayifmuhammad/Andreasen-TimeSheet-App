@@ -5,6 +5,48 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph #
 from reportlab.lib import colors #type:ignore 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle #type:ignore
 from reportlab.platypus import Paragraph #type:ignore
+from datetime import timedelta, datetime
+from .models import Timesheet
+
+
+##########################################
+#current version test date range funtion. keep if working
+
+def get_monday_of_week(date):
+    return date - timedelta(days=date.weekday())
+
+def generate_week_ranges_from_given_startdate_till_date(start_date=Timesheet.objects.earliest('date').date,end_date = datetime.now().date()):
+    week_ranges = []
+    start_of_week = get_monday_of_week(start_date)
+    while start_of_week <= end_date:
+        end_of_week = start_of_week + timedelta(days=4)
+        week_ranges.append({"start": start_of_week , "end" : end_of_week})
+        start_of_week += timedelta(days=7)
+    return week_ranges
+
+def getBiWeeklyRanges():
+    biweekly_ranges = []
+    weekranges = generate_week_ranges_from_given_startdate_till_date()
+    for week_index in range(len(weekranges)-1):
+        biweekly_ranges.append({"biweekly_start":weekranges[week_index]['start'].strftime("%d/%m/%Y"),"biweekly_end":weekranges[week_index+1]['end'].strftime("%d/%m/%Y")})
+
+    print("bi weekly ranges = \n",biweekly_ranges)
+    return biweekly_ranges[::-1]
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################## old
+
 
 
 def generate_project_report(filename, project, timesheets, duration, total):
@@ -66,7 +108,7 @@ def generate_project_report(filename, project, timesheets, duration, total):
     elements.append(table)
 
     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Total hours worked: {total['previous']+total['current']} hours", styles['Normal']))
+    elements.append(Paragraph(f"Total hours worked: {total['previous'] + total['current']} hours", styles['Normal']))
     
     # Build PDF
     doc.build(elements)
@@ -77,6 +119,8 @@ def generate_project_report(filename, project, timesheets, duration, total):
     response.write(pdf)
     
     return response
+
+
 def generate_employee_report(filename, project, timesheets, duration, total):
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
@@ -146,3 +190,6 @@ def generate_employee_report(filename, project, timesheets, duration, total):
     response.write(pdf)
     
     return response
+
+
+ 
