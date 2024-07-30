@@ -21,19 +21,20 @@
                     </a>
                 </li>
 
+                {% if user.is_superuser or user.is_staff %}
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'view_weekly_timesheet' %}">
                         <i class="tim-icons icon-simple-add"></i>
                         <p>Timesheets</p>
                     </a>
                 </li>
-
-                {% if not user.is_staff %}
+                {% endif %}
+                {% if not user.is_superuser and not user.is_staff %}
 
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'timesheet' %}">
                         <i class="tim-icons icon-notes"></i>
-                        <p>Edit Timesheet</p>
+                        <p>Manage Timesheets</p>
                     </a>
                 </li>
 

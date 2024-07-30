@@ -57,6 +57,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between">
                     <h4 class="card-title col-3">Timesheets for Project: {{ project.name }}</h4>
+                    {% if user.is_superuser or user.is_staff %}
                     <form class="d-flex justify-content-end align-items-center col-9" method="post" id="date-range-form">
                         {% csrf_token %}
                         <label for="date_range">Select Date Range to export:</label>
@@ -70,6 +71,7 @@
                         </select>
                         <a href="#" id="export-link" class="btn btn-primary" onclick="updateExportLink()">Export Report</a>
                     </form>
+                    {% endif %}
                     <!-- <a href="{% url 'export_project_based_timesheet_summary' project_id=project.id %}" class="btn btn-primary">Export Report</a> -->
                 </div>
                 <div class="card-body">
