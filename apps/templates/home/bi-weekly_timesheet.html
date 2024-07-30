@@ -12,9 +12,17 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between">
-                    <h4 class="card-title">Biweekly Timesheet ({{duration.start}} - {{duration.end}})</h4>
+                    <h4 class="card-title">Timesheet ({{duration.start}} - {{duration.end}})</h4>
                     {% if user.is_staff %}
-                        <a href="{% url 'export_timesheet' duration.start duration.end %}" class="btn btn-primary">Export Timesheets</a>
+                    <label for="select_to_export">Select employee:</label>
+                    <select class="form-control option-background col-3 mr-5 ml-3" name="employee" id="select_to_export" onchange="updateExportLinkAndTable()">
+                      {% for employee in employees %}
+                        <option class="form-control option-background" value="{{ employee.id }}">
+                          {{ employee }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                        <a href="#" class="btn btn-primary" id="export-link">Export Timesheets</a>
                     {% endif %}
                 </div>
                 <div class="card-body">
@@ -71,6 +79,18 @@
                     </div>
     
                     <script>
+
+                        function updateExportLinkAndTable() {
+                                console.log("here")
+                                const dropdown = document.getElementById('select_to_export');
+                                const selectedValue = dropdown.value;
+                                const exportLink = document.getElementById('export-link');
+                                const employee_data_url = `{% url 'view_weekly_timesheet' %}?employee_id=${selectedValue}`
+                                exportLink.href = url;
+                                console.log("url = ",url)
+                                window.location = url;
+                            }
+
                         let weekly_total = 0
                         document.addEventListener('DOMContentLoaded', function () 
                         {
@@ -107,6 +127,5 @@
 </div>
 
 {% endblock content %}
-
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}{% endblock javascripts %}
