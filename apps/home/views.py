@@ -18,7 +18,7 @@ from django.http import HttpResponse
 from datetime import datetime
 from django.http import HttpResponse
 import csv
-from .utils import generate_project_report, generate_employee_report, getBiWeeklyRanges, generate_week_ranges_from_given_startdate_till_date
+from .utils import generate_project_report, generate_employee_report, getBiWeeklyRanges, generate_week_ranges_from_given_startdate_till_date, generate_employee_report
 
 
 
@@ -80,8 +80,6 @@ def export_project_based_timesheet_summary(request,project_id=None, start_date=N
     end_date = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
 
     project = get_object_or_404(Project, pk=project_id)
-    print("start_date is : ", start_date)
-    print("end date is : ", end_date)
     
     week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
 
@@ -121,17 +119,28 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
 
     if not cEnd:
         cEnd = fetchedTimePeriods['cEnd']
-    
-    if request.user.is_superuser:
-        previous_week_timesheets = Timesheet.objects.filter(date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
-        current_week_timesheets = Timesheet.objects.filter(date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
-    elif request.user.is_staff:
-        previous_week_timesheets = Timesheet.objects.filter(project__team=request.user.team,date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
-        current_week_timesheets = Timesheet.objects.filter(project__team=request.user.team,date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
-    else:
-        previous_week_timesheets = Timesheet.objects.filter(employee=request.user, date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date')
-        current_week_timesheets = Timesheet.objects.filter(employee=request.user, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date')
+ 
 
+    employees = []
+    if request.user.is_superuser:
+        employees = User.objects.exclude(is_superuser=True)
+        if request.GET.get('employee_id'):
+            employee_id = request.GET.get('employee_id')
+        else:
+            employee_id = employees[0].id
+        previous_week_timesheets = Timesheet.objects.filter(employee=employee_id,date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
+        current_week_timesheets = Timesheet.objects.filter(employee=employee_id, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
+    elif request.user.is_staff:
+        employees = User.objects.filter(team=request.user.team).exclude(is_staff=True)
+        if request.GET.get('employee_id'):
+            employee_id = request.GET.get('employee_id')
+        else:
+            employee_id = employees[0].id
+        employee = get_object_or_404(User,pk = employee_id)
+        previous_week_timesheets = Timesheet.objects.filter(employee=employee, project__team=request.user.team).order_by('date') 
+        current_week_timesheets = Timesheet.objects.filter(employee=employee, project__team=request.user.team).order_by('date') 
+        
+  
     for timesheet in previous_week_timesheets:
         timesheet.day = timesheet.date.strftime("%A")
     for timesheet in current_week_timesheets:
@@ -143,8 +152,46 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
         'active_projects': active_projects,
         'timesheets' : [previous_week_timesheets, current_week_timesheets],
         'duration' : {'start': pStart.strftime('%d-%m-%y'),'end' : cEnd.strftime('%d-%m-%y')},
+        'biweekly_ranges' : getBiWeeklyRanges(),
+        'employees' : employees,
     }
     return render(request, 'home/bi-weekly_timesheet.html', context)
+
+#creates data for the pdf export for employee report PDF
+@login_required(login_url="/login/")
+def print_employee_report(request, startDate=None, endDate=None):
+    
+    employee_model = get_user_model()
+    employee_id = request.GET.get('employee_id')
+    employee = get_object_or_404(employee_model, id=employee_id)
+    startDate = datetime.strptime(request.GET.get('start_date'),'%d/%m/%Y').date()
+    endDate = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
+    #get biweekly ranges from given start and end dates
+    if startDate and endDate:
+        print("Start date : ", startDate, "end date = ",endDate)
+        weekranges = generate_week_ranges_from_given_startdate_till_date()
+    if request.user.is_superuser or request.user.is_staff: 
+        previous_week_timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekranges[0]['start'].strftime("%Y-%m-%d"),weekranges[0]['end'].strftime("%Y-%m-%d"))).order_by('date')
+        prev_total = 0
+        for sheet in previous_week_timesheets:
+            prev_total += sheet.hours_worked
+
+        current_total = 0
+        current_week_timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekranges[1]['start'].strftime("%Y-%m-%d"),weekranges[1]['end'].strftime("%Y-%m-%d"))).order_by('date')
+        for sheet in current_week_timesheets:
+            current_total += sheet.hours_worked
+    
+    for week in [previous_week_timesheets,current_week_timesheets]:
+        for timesheet in week:
+            print('here')
+            timesheet.day = timesheet.date.strftime("%A")
+            print(timesheet.day)
+
+    duration = {'start': startDate,'end' : endDate}
+    filename = f"{employee.username}-{duration['start']}-to-{duration['end']}-report.pdf"
+    timesheets= [previous_week_timesheets, current_week_timesheets],
+    
+    return generate_employee_report(employee,timesheets, filename, duration, prev_total+current_total)
 
 
 @login_required(login_url="/login/")
