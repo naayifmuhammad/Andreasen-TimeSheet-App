@@ -4,6 +4,7 @@ from reportlab.lib.pagesizes import letter #type:ignore
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph #type:ignore  
 from reportlab.lib import colors #type:ignore 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle #type:ignore
+from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER  # type: ignore # Import alignment constants
 from reportlab.platypus import Paragraph #type:ignore
 from datetime import timedelta, datetime
 from .models import Timesheet
@@ -29,8 +30,6 @@ def getBiWeeklyRanges():
     weekranges = generate_week_ranges_from_given_startdate_till_date()
     for week_index in range(len(weekranges)-1):
         biweekly_ranges.append({"biweekly_start":weekranges[week_index]['start'].strftime("%d/%m/%Y"),"biweekly_end":weekranges[week_index+1]['end'].strftime("%d/%m/%Y")})
-
-    print("bi weekly ranges = \n",biweekly_ranges)
     return biweekly_ranges[::-1]
 
 
@@ -181,7 +180,8 @@ def generate_employee_report(employee,timesheets, filename, duration):
 #     return response
 
 
-def generate_employee_report(filename, project, timesheets, duration, total):
+# Function to generate employee report PDF
+def generate_employee_report(employee, timesheets, filename, duration, total):
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -193,39 +193,50 @@ def generate_employee_report(filename, project, timesheets, duration, total):
 
     # Define styles
     styles = getSampleStyleSheet()
+    styleN = styles["BodyText"]
+    styleN.alignment = TA_LEFT
+    styleBH = styles["Normal"]
+    styleBH.alignment = TA_CENTER
 
     style_left = ParagraphStyle(
-    'LeftAligned',
-    parent=styles['Normal'],
-    alignment=0,  # Left alignment
-    fontSize=12,
-    spaceAfter=6
-)
+        'LeftAligned',
+        parent=styles['Normal'],
+        alignment=0,  # Left alignment
+        fontSize=12,
+        spaceAfter=6
+    )
 
     # Add company name and project name
-    elements.append(Paragraph(f"{project.team}", styles['Title']))
-    elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
-    elements.append(Paragraph(f"{duration['pStart']} to {duration['cEnd']}", styles['Normal']))
-    elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
+    elements.append(Paragraph(f"{employee}", styles['Title']))
+    elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
+    elements.append(Paragraph(f"Team: {employee.team.name}", style_left))
+    elements.append(Paragraph(f"{duration['start']} to {duration['end']}", style_left))
+    elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
     # Create table data
     table_data = [
-        ['Employee', 'Description of Work', 'Hours Worked'],
+        [Paragraph('<b>Project</b>', styleBH), Paragraph('<b>Description</b>', styleBH),
+         Paragraph('<b>Mon</b>', styleBH), Paragraph('<b>Tue</b>', styleBH), Paragraph('<b>Wed</b>', styleBH),
+         Paragraph('<b>Thu</b>', styleBH), Paragraph('<b>Fri</b>', styleBH)]
     ]
     
     # Add data from previous and current timesheets
-    for week_key in ['previous', 'current']:
-        week_timesheets = timesheets[week_key]
-        for timesheet in week_timesheets:
-            table_data.append([
-                timesheet.employee,
-                timesheet.description,
-                timesheet.hours_worked,
-            ])
+    for weeks in timesheets:
+        for week in weeks:
+            for timesheet in week:
+                table_data.append([
+                    Paragraph(timesheet.project.code, styleN),
+                    Paragraph(timesheet.description, styleN),  # Wrapping text in Paragraph
+                    Paragraph(str(0 if timesheet.date.strftime('%A') != 'Monday' else timesheet.hours_worked), styleN),
+                    Paragraph(str(0 if timesheet.date.strftime('%A') != 'Tuesday' else timesheet.hours_worked), styleN),
+                    Paragraph(str(0 if timesheet.date.strftime('%A') != 'Wednesday' else timesheet.hours_worked), styleN),
+                    Paragraph(str(0 if timesheet.date.strftime('%A') != 'Thursday' else timesheet.hours_worked), styleN),
+                    Paragraph(str(0 if timesheet.date.strftime('%A') != 'Friday' else timesheet.hours_worked), styleN),
+                ])
 
-    # Create table
-    table = Table(table_data,colWidths=[doc.width / 3.0] * len(table_data[0]))
+    # Create table with custom column widths
+    col_widths = [doc.width * 0.1, doc.width * 0.45, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09]
+    table = Table(table_data, colWidths=col_widths)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -238,8 +249,8 @@ def generate_employee_report(filename, project, timesheets, duration, total):
     
     elements.append(table)
 
-    elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Total hours worked: {total['previous']+total['current']} hours", styles['Normal']))
+    elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
+    elements.append(Paragraph(f"Total hours worked: {total} hours", style_left))
     
     # Build PDF
     doc.build(elements)
