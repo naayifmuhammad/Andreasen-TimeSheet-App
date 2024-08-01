@@ -210,7 +210,7 @@ def generate_employee_report(employee, timesheets, filename, duration, total):
     elements.append(Paragraph(f"{employee}", styles['Title']))
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Team: {employee.team.name}", style_left))
-    elements.append(Paragraph(f"{duration['start']} to {duration['end']}", style_left))
+    elements.append(Paragraph(f"{duration['prev_start']} to {duration['curr_end']}", style_left))
     elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
     # Create table data
@@ -250,7 +250,7 @@ def generate_employee_report(employee, timesheets, filename, duration, total):
     elements.append(table)
 
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
-    elements.append(Paragraph(f"Total hours worked: {total} hours", style_left))
+    elements.append(Paragraph(f"Total: {total} hours", style_left))
     
     # Build PDF
     doc.build(elements)

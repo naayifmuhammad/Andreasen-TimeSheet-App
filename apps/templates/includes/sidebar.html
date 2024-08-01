@@ -24,17 +24,17 @@
                 {% if user.is_superuser or user.is_staff %}
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'view_weekly_timesheet' %}">
-                        <i class="tim-icons icon-simple-add"></i>
-                        <p>Timesheets</p>
+                        <i class="tim-icons icon-paper"></i>
+                        <p>Export Employee Reports</p>
                     </a>
                 </li>
                 {% endif %}
-                {% if not user.is_superuser and not user.is_staff %}
+                {% if not user.is_superuser %}
 
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'timesheet' %}">
-                        <i class="tim-icons icon-notes"></i>
-                        <p>Manage Timesheets</p>
+                        <i class="tim-icons icon-simple-add"></i>
+                        <p>Add Timesheets</p>
                     </a>
                 </li>
 
@@ -54,7 +54,7 @@
                 {% if user.is_staff %}
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'manage_employees' %}">
-                        <i class="tim-icons icon-badge"></i>
+                        <i class="tim-icons icon-settings"></i>
                         <p>Manage Employees</p>
                     </a>
                 </li>

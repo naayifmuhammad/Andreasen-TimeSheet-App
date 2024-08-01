@@ -131,7 +131,7 @@ def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None
         previous_week_timesheets = Timesheet.objects.filter(employee=employee_id,date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
         current_week_timesheets = Timesheet.objects.filter(employee=employee_id, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
     elif request.user.is_staff:
-        employees = User.objects.filter(team=request.user.team).exclude(is_staff=True)
+        employees = User.objects.filter(team=request.user.team)
         if request.GET.get('employee_id'):
             employee_id = request.GET.get('employee_id')
         else:
@@ -168,8 +168,7 @@ def print_employee_report(request, startDate=None, endDate=None):
     endDate = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
     #get biweekly ranges from given start and end dates
     if startDate and endDate:
-        print("Start date : ", startDate, "end date = ",endDate)
-        weekranges = generate_week_ranges_from_given_startdate_till_date()
+        weekranges = generate_week_ranges_from_given_startdate_till_date(startDate,endDate)
     if request.user.is_superuser or request.user.is_staff: 
         previous_week_timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekranges[0]['start'].strftime("%Y-%m-%d"),weekranges[0]['end'].strftime("%Y-%m-%d"))).order_by('date')
         prev_total = 0
@@ -180,17 +179,16 @@ def print_employee_report(request, startDate=None, endDate=None):
         current_week_timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekranges[1]['start'].strftime("%Y-%m-%d"),weekranges[1]['end'].strftime("%Y-%m-%d"))).order_by('date')
         for sheet in current_week_timesheets:
             current_total += sheet.hours_worked
+        
     
     for week in [previous_week_timesheets,current_week_timesheets]:
         for timesheet in week:
-            print('here')
             timesheet.day = timesheet.date.strftime("%A")
             print(timesheet.day)
 
-    duration = {'start': startDate,'end' : endDate}
-    filename = f"{employee.username}-{duration['start']}-to-{duration['end']}-report.pdf"
+    duration = {'prev_start': weekranges[0]['start'], "prev_end": weekranges[0]["end"], "curr_start": weekranges[1]["start"]  ,'curr_end' : weekranges[1]["end"]}
+    filename = f"{employee.username}-{duration['prev_start']}-to-{duration['curr_end']}-report.pdf"
     timesheets= [previous_week_timesheets, current_week_timesheets],
-    
     return generate_employee_report(employee,timesheets, filename, duration, prev_total+current_total)
 
 
