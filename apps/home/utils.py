@@ -16,7 +16,10 @@ from .models import Timesheet
 def get_monday_of_week(date):
     return date - timedelta(days=date.weekday())
 
-def generate_week_ranges_from_given_startdate_till_date(start_date=Timesheet.objects.earliest('date').date,end_date = datetime.now().date()):
+def generate_week_ranges_from_given_startdate_till_date(start_date, end_date):
+    if start_date == end_date == None:
+        start_date=Timesheet.objects.earliest('date').date
+        end_date = datetime.now().date()
     week_ranges = []
     start_of_week = get_monday_of_week(start_date)
     while start_of_week <= end_date:
