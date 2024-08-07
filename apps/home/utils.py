@@ -16,7 +16,7 @@ from .models import Timesheet
 def get_monday_of_week(date):
     return date - timedelta(days=date.weekday())
 
-def generate_week_ranges_from_given_startdate_till_date(start_date, end_date):
+def generate_week_ranges_from_given_startdate_till_date(start_date=None, end_date=None):
     if start_date == end_date == None:
         start_date=Timesheet.objects.earliest('date').date
         end_date = datetime.now().date()
@@ -220,13 +220,22 @@ def generate_employee_report(employee, timesheets, filename, duration, total):
     table_data = [
         [Paragraph('<b>Project</b>', styleBH), Paragraph('<b>Description</b>', styleBH),
          Paragraph('<b>Mon</b>', styleBH), Paragraph('<b>Tue</b>', styleBH), Paragraph('<b>Wed</b>', styleBH),
-         Paragraph('<b>Thu</b>', styleBH), Paragraph('<b>Fri</b>', styleBH)]
+         Paragraph('<b>Thu</b>', styleBH), Paragraph('<b>Fri</b>', styleBH), Paragraph('<b>Total</b>', styleBH)]
     ]
     
     # Add data from previous and current timesheets
+    total_time_worked_in_specific_day = {
+        'Monday' : 0,
+        'Tuesday' : 0,
+        'Wednesday' : 0,
+        'Thursday' : 0,
+        'Friday' : 0,
+
+    }
     for weeks in timesheets:
         for week in weeks:
             for timesheet in week:
+                total_time_worked_in_specific_day[timesheet.date.strftime('%A')] += timesheet.hours_worked
                 table_data.append([
                     Paragraph(timesheet.project.code, styleN),
                     Paragraph(timesheet.description, styleN),  # Wrapping text in Paragraph
@@ -235,8 +244,19 @@ def generate_employee_report(employee, timesheets, filename, duration, total):
                     Paragraph(str(0 if timesheet.date.strftime('%A') != 'Wednesday' else timesheet.hours_worked), styleN),
                     Paragraph(str(0 if timesheet.date.strftime('%A') != 'Thursday' else timesheet.hours_worked), styleN),
                     Paragraph(str(0 if timesheet.date.strftime('%A') != 'Friday' else timesheet.hours_worked), styleN),
+                    Paragraph(str(timesheet.hours_worked), styleN),
                 ])
-
+    table_data.append([
+        Paragraph('', styleN),
+        Paragraph('', styleN),
+        Paragraph(str(total_time_worked_in_specific_day["Monday"]), styleN),
+        Paragraph(str(total_time_worked_in_specific_day["Tuesday"]), styleN),
+        Paragraph(str(total_time_worked_in_specific_day["Wednesday"]), styleN),
+        Paragraph(str(total_time_worked_in_specific_day["Thursday"]), styleN),
+        Paragraph(str(total_time_worked_in_specific_day["Friday"]), styleN),
+        
+        Paragraph(str(total), styleN),
+    ])
     # Create table with custom column widths
     col_widths = [doc.width * 0.1, doc.width * 0.45, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09]
     table = Table(table_data, colWidths=col_widths)
