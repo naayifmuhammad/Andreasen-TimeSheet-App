@@ -207,7 +207,7 @@ def generate_employee_report(employee, timesheets, filename, duration, total):
     )
 
     # Add company name and project name
-    elements.append(Paragraph(f"{employee}", styles['Title']))
+    elements.append(Paragraph(f"{employee.get_full_name()}", styles['Title']))
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Team: {employee.team.name}", style_left))
     elements.append(Paragraph(f"{duration['prev_start']} to {duration['curr_end']}", style_left))

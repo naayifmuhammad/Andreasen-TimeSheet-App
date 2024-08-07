@@ -79,11 +79,25 @@ class EditProjectForm(forms.ModelForm):
 class EmployeeCreationForm(UserCreationForm):
     class Meta:
        model = CustomUser
-       fields = ('username', 'email', 'password1', 'password2', 'team')
+       fields = ('username','first_name' ,'last_name', 'email', 'password1', 'password2', 'team')
     username = forms.CharField(
         widget=forms.TextInput(
             attrs={
                 "placeholder": "Username",
+                "class": "form-control"
+            }
+        ))
+    first_name = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Enter first name",
+                "class": "form-control"
+            }
+        ))
+    last_name = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Enter last name",
                 "class": "form-control"
             }
         ))
