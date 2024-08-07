@@ -124,55 +124,59 @@ def export_project_based_timesheet_summary(request,project_id=None, start_date=N
 
 @login_required(login_url="/login/")
 def view_weekly_timesheet(request, pStart=None,pEnd=None, cStart=None, cEnd=None):
+    try:
+        fetchedTimePeriods = getTimePeriods()
+        if not pStart:
+            pStart = fetchedTimePeriods['pStart']
+
+        if not pEnd:
+            pEnd = fetchedTimePeriods['pEnd']
+        if not cStart:
+            cStart = fetchedTimePeriods['cStart']
+
+        if not cEnd:
+            cEnd = fetchedTimePeriods['cEnd']
     
-    fetchedTimePeriods = getTimePeriods()
-    if not pStart:
-        pStart = fetchedTimePeriods['pStart']
 
-    if not pEnd:
-        pEnd = fetchedTimePeriods['pEnd']
-    if not cStart:
-        cStart = fetchedTimePeriods['cStart']
-
-    if not cEnd:
-        cEnd = fetchedTimePeriods['cEnd']
- 
-
-    employees = []
-    if request.user.is_superuser:
-        employees = User.objects.exclude(is_superuser=True)
-        if request.GET.get('employee_id'):
-            employee_id = request.GET.get('employee_id')
-        else:
-            employee_id = employees[0].id
-        previous_week_timesheets = Timesheet.objects.filter(employee=employee_id,date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
-        current_week_timesheets = Timesheet.objects.filter(employee=employee_id, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
-    elif request.user.is_staff:
-        employees = User.objects.filter(team=request.user.team)
-        if request.GET.get('employee_id'):
-            employee_id = request.GET.get('employee_id')
-        else:
-            employee_id = employees[0].id
-        employee = get_object_or_404(User,pk = employee_id)
-        previous_week_timesheets = Timesheet.objects.filter(employee=employee, project__team=request.user.team).order_by('date') 
-        current_week_timesheets = Timesheet.objects.filter(employee=employee, project__team=request.user.team).order_by('date') 
-        
-  
-    for timesheet in previous_week_timesheets:
-        timesheet.day = timesheet.date.strftime("%A")
-    for timesheet in current_week_timesheets:
-        timesheet.day = timesheet.date.strftime("%A")
+        employees = []
+        if request.user.is_superuser:
+            employees = User.objects.exclude(is_superuser=True)
+            if request.GET.get('employee_id'):
+                employee_id = request.GET.get('employee_id')
+            else:
+                employee_id = employees[0].id
+            previous_week_timesheets = Timesheet.objects.filter(employee=employee_id,date__range=(pStart.strftime("%Y-%m-%d"),pEnd.strftime("%Y-%m-%d"))).order_by('date') 
+            current_week_timesheets = Timesheet.objects.filter(employee=employee_id, date__range=(cStart.strftime("%Y-%m-%d"),cEnd.strftime("%Y-%m-%d"))).order_by('date') 
+        elif request.user.is_staff:
+            employees = User.objects.filter(team=request.user.team)
+            if request.GET.get('employee_id'):
+                employee_id = request.GET.get('employee_id')
+            else:
+                employee_id = employees[0].id
+            employee = get_object_or_404(User,pk = employee_id)
+            previous_week_timesheets = Timesheet.objects.filter(employee=employee, project__team=request.user.team).order_by('date') 
+            current_week_timesheets = Timesheet.objects.filter(employee=employee, project__team=request.user.team).order_by('date') 
+            
+    
+        for timesheet in previous_week_timesheets:
+            timesheet.day = timesheet.date.strftime("%A")
+        for timesheet in current_week_timesheets:
+            timesheet.day = timesheet.date.strftime("%A")
 
 
-    active_projects = Project.objects.filter(is_active=True, team=request.user.team)
-    context = {
-        'active_projects': active_projects,
-        'timesheets' : [previous_week_timesheets, current_week_timesheets],
-        'duration' : {'start': pStart.strftime('%d-%m-%y'),'end' : cEnd.strftime('%d-%m-%y')},
-        'biweekly_ranges' : getBiWeeklyRanges(),
-        'employees' : employees,
-    }
-    return render(request, 'home/bi-weekly_timesheet.html', context)
+        active_projects = Project.objects.filter(is_active=True, team=request.user.team)
+        context = {
+            'active_projects': active_projects,
+            'timesheets' : [previous_week_timesheets, current_week_timesheets],
+            'duration' : {'start': pStart.strftime('%d-%m-%y'),'end' : cEnd.strftime('%d-%m-%y')},
+            'biweekly_ranges' : getBiWeeklyRanges(),
+            'employees' : employees,
+        }
+        return render(request, 'home/bi-weekly_timesheet.html', context)
+    except IndexError:
+        return render(request, 'home/index_error.html')
+
+
 
 #creates data for the pdf export for employee report PDF
 @login_required(login_url="/login/")
