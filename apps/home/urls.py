@@ -9,6 +9,8 @@ urlpatterns = [
     # The home page
     path('', views.index, name='home'),
     path('create_project/', views.create_project, name='create_project'),  # URL for creating a new project
+    path('add-customer/', views.add_customer, name='add_customer'),
+    path('add-team/', views.add_team, name='add_team'),
     #path('create_timesheet/', views.create_timesheet, name='create_timesheet'),  # URL for creating a timesheet
     path('projects/', views.projects_tab, name='projects_tab'),
     

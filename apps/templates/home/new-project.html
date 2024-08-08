@@ -20,6 +20,12 @@
                         {% csrf_token %}
                         <div class="card-body px-5 py-3">
                             {{ form.as_p }}
+                            <button type="button" class="btn form-class" data-toggle="modal" data-target="#addTeamModal">
+                                Create new team
+                            </button>
+                            <button type="button" class="btn form-class" data-toggle="modal" data-target="#addCustomerModal">
+                                Add new customer
+                            </button>
                         </div>
                         <div class="card-footer text-center">
                             <button type="submit" class="btn btn-primary">Create Project</button>
@@ -30,4 +36,120 @@
         </div>
     </div>
 </div>
+
+
+<!-- Modal for adding a new team -->
+<div class="modal fade" id="addTeamModal" tabindex="-1" role="dialog" aria-labelledby="addTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addTeamModalLabel">Create New Team</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="add-team-form">
+            <div class="form-group">
+              <label for="team-name">Team Name</label>
+              <input type="text" class="form-control" id="team-name" placeholder="Enter team name">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="save-team">Save new team</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for adding a new customer -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="add-customer-form">
+            <div class="form-group">
+              <label for="customer-name">Customer Name</label>
+              <input type="text" class="form-control" id="customer-name" placeholder="Enter customer name">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="save-customer">Save Customer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function(){
+        $('#save-customer').click(function(){
+            var customerName = $('#customer-name').val();
+            if(customerName.trim() === ""){
+                alert("Customer name cannot be empty!");
+                return;
+            }
+            $.ajax({
+                url: "{% url 'add_customer' %}",
+                type: "POST",
+                data: {
+                    'name': customerName,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(data){
+                    if(data.success){
+                        // Add the new customer to the dropdown and select it
+                        var newOption = new Option(data.name, data.id, true, true);
+                        $('#customer-select').append(newOption).trigger('change');
+                        // Close the modal
+                        $('#addCustomerModal').modal('hide');
+                    } else {
+                        alert(data.error);
+                    }
+                },
+                error: function(){
+                    alert("Something went wrong. Please try again.");
+                }
+            });
+        });
+        $('#save-team').click(function(){
+            var teamName = $('#team-name').val();
+            if(teamName.trim() === ""){
+                alert("team name cannot be empty!");
+                return;
+            }
+            $.ajax({
+                url: "{% url 'add_team' %}",
+                type: "POST",
+                data: {
+                    'name': teamName,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(data){
+                    if(data.success){
+                        // Add the new team to the dropdown and select it
+                        var newOption = new Option(data.name, data.id, true, true);
+                        $('#team-select').append(newOption).trigger('change');
+                        // Close the modal
+                        $('#addTeamModal').modal('hide');
+                    } else {
+                        alert(data.error);
+                    }
+                },
+                error: function(){
+                    alert("Something went wrong. Please try again.");
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

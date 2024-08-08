@@ -10,9 +10,16 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
+class Customer(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class Project(models.Model):
     code = models.CharField(default="",max_length=255,unique=True)
     name = models.CharField(max_length=255)
+    customer = models.ForeignKey(Customer,on_delete=models.SET_NULL,null=True)
     description = models.TextField(blank=True, null=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
@@ -22,6 +29,7 @@ class Project(models.Model):
     def __str__(self):
         return self.name
     
+
 class Timesheet(models.Model):
     employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)

@@ -1,12 +1,12 @@
 from django import template
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template import loader
 from django.contrib import messages
 from django.urls import reverse
 from .forms import TimesheetForm, ProjectForm, EditProjectForm
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Project, Timesheet, Team
+from .models import Project, Timesheet, Team, Customer
 from django.db.models import Sum
 from django.utils.timezone import now
 from .forms import EmployeeCreationForm
@@ -261,42 +261,45 @@ def export_timesheet(request, start_date, end_date):
 def project_details(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     individual_time_sheet_data = dict()
-
     exclusive_staff_data = dict()
+    timesheets = Timesheet.objects.filter(project=project)
+    total_time = 0
+    if timesheets.exists():    
+        if request.user.is_staff:
+            # If user is staff, fetch total hours worked by all employees on this project
+            timesheets = Timesheet.objects.filter(project=project).order_by('date')
 
-    if request.user.is_staff:
-        # If user is staff, fetch total hours worked by all employees on this project
-        timesheets = Timesheet.objects.filter(project=project).order_by('date')
-        total_time = timesheets.aggregate(total_time=Sum('hours_worked'))['total_time'] or 0
-        
-        exclusive_staff_data['total_timesheet_count'] = timesheets.count()
-        
-        timesheets = timesheets.select_related('employee').order_by('date')
-        # Fetch distinct employees who have contributed to the project
-        employee_ids = timesheets.values_list('employee_id', flat=True).distinct()
-        employees = get_user_model().objects.filter(id__in=employee_ids)
-        
-        for employee in employees:
-            timesheets_of_employee = timesheets.filter(employee = employee)
-            timesheetcount = timesheets_of_employee.count()
-            individual_time_sheet_data[employee] = {
-                'timesheets' : timesheets_of_employee,
-                'total_hours_worked' : timesheets_of_employee.aggregate(hours_worked = Sum('hours_worked'))['hours_worked'] or 0,
-                'timesheetcount' : timesheetcount,
-            }  
-        exclusive_staff_data['individual_time_sheet_data'] = individual_time_sheet_data
+            total_time = timesheets.aggregate(total_time=Sum('hours_worked'))['total_time'] or 0
+            
+            exclusive_staff_data['total_timesheet_count'] = timesheets.count()
+            
+            timesheets = timesheets.select_related('employee').order_by('date')
+            # Fetch distinct employees who have contributed to the project
+            employee_ids = timesheets.values_list('employee_id', flat=True).distinct()
+            employees = get_user_model().objects.filter(id__in=employee_ids)
+            
+            for employee in employees:
+                timesheets_of_employee = timesheets.filter(employee = employee)
+                timesheetcount = timesheets_of_employee.count()
+                individual_time_sheet_data[employee] = {
+                    'timesheets' : timesheets_of_employee,
+                    'total_hours_worked' : timesheets_of_employee.aggregate(hours_worked = Sum('hours_worked'))['hours_worked'] or 0,
+                    'timesheetcount' : timesheetcount,
+                }  
+            exclusive_staff_data['individual_time_sheet_data'] = individual_time_sheet_data
 
+        else:
+            # If user is not staff, fetch timesheets added by the current user only
+            timesheets = Timesheet.objects.filter(project=project, employee=request.user).order_by('date')
+            total_time = timesheets.aggregate(total_time=Sum('hours_worked'))['total_time'] or 0
+            timesheetcount = timesheets.count()
     else:
-        # If user is not staff, fetch timesheets added by the current user only
-        timesheets = Timesheet.objects.filter(project=project, employee=request.user).order_by('date')
-        total_time = timesheets.aggregate(total_time=Sum('hours_worked'))['total_time'] or 0
-        timesheetcount = timesheets.count()
-
+        timesheets = Timesheet.objects.none()
     context = {
         'project': project,
         'timesheets': timesheets,
         'total_time': total_time,
-        'biweekly_ranges' : getBiWeeklyRanges(),
+        'biweekly_ranges' : getBiWeeklyRanges() if timesheets.exists() else None,
     }
     
     if request.user.is_staff: # only needed for staff
@@ -396,6 +399,38 @@ def create_project(request):
     return render(request, 'home/new-project.html', {'form': form})
 
 
+
+
+@login_required(login_url="/login/")
+def add_customer(request):
+    if request.method == 'POST' and request.is_ajax():
+        name = request.POST.get('name')
+        if not name:
+            return JsonResponse({'success': False, 'error': 'Customer name cannot be empty'})
+        
+        if Customer.objects.filter(name=name).exists():
+            return JsonResponse({'success': False, 'error': 'Customer with this name already exists'})
+        
+        customer = Customer.objects.create(name=name)
+        return JsonResponse({'success': True, 'id': customer.id, 'name': customer.name})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@login_required(login_url="/login/")
+def add_team(request):
+    if request.method == 'POST' and request.is_ajax():
+        name = request.POST.get('name')
+        if not name:
+            return JsonResponse({'success': False, 'error': 'Team name cannot be empty'})
+        
+        if Team.objects.filter(name=name).exists():
+            return JsonResponse({'success': False, 'error': 'Team with this name already exists'})
+        
+        team = Team.objects.create(name=name)
+        return JsonResponse({'success': True, 'id': team.id, 'name': team.name})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+
 @login_required(login_url="/login/")
 def timesheet_entry(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
@@ -432,12 +467,10 @@ def delete_user(request, user_id):
 
 @login_required(login_url="/login/")
 def delete_timesheet(request, timesheet_id):
-    if not request.user.is_staff:  #only employees can do this
-        timesheet = get_object_or_404(Timesheet, id=timesheet_id)    
-        project = timesheet.project
-        timesheet.delete()
-        return redirect('project_details', project_id = project.id)
-    return redirect('')  
+    timesheet = get_object_or_404(Timesheet, id=timesheet_id)    
+    project = timesheet.project
+    timesheet.delete()
+    return redirect('project_details', project_id = project.id)
 
 
 @login_required(login_url="/login/")

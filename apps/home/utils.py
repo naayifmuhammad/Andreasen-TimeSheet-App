@@ -31,9 +31,13 @@ def generate_week_ranges_from_given_startdate_till_date(start_date=None, end_dat
 def getBiWeeklyRanges():
     biweekly_ranges = []
     weekranges = generate_week_ranges_from_given_startdate_till_date()
-    for week_index in range(len(weekranges)-1):
-        biweekly_ranges.append({"biweekly_start":weekranges[week_index]['start'].strftime("%d/%m/%Y"),"biweekly_end":weekranges[week_index+1]['end'].strftime("%d/%m/%Y")})
-    return biweekly_ranges[::-1]
+    if len(weekranges) > 1:
+        for week_index in range(len(weekranges)-1):
+            biweekly_ranges.append({"biweekly_start":weekranges[week_index]['start'].strftime("%d/%m/%Y"),"biweekly_end":weekranges[week_index+1]['end'].strftime("%d/%m/%Y")})
+        return biweekly_ranges[::-1]
+    else:
+        biweekly_ranges.append({"biweekly_start":weekranges[0]['start'].strftime("%d/%m/%Y"),"biweekly_end":weekranges[0]['end'].strftime("%d/%m/%Y")})
+        return biweekly_ranges[::-1]
 
 
 #generates the pdf for project based report

@@ -1,6 +1,6 @@
 from typing import Any
 from django import forms 
-from .models import Timesheet, Project, Team
+from .models import Timesheet, Project, Team, Customer
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from django.core.validators import MaxValueValidator
@@ -29,13 +29,20 @@ class TimesheetForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     team = forms.ModelChoiceField(queryset=Team.objects.all(),
                                   widget=forms.Select(
-                                      attrs={'class' : 'form-control option-background'}
+                                      attrs={'class' : 'form-control option-background', "id" : 'team-select'}
                                   ),
                                   empty_label='Assign to a team'
                                   )
+    customer = forms.ModelChoiceField(
+        queryset=Customer.objects.all(),
+        widget=forms.Select(
+            attrs={'class': 'form-control', 'id': 'customer-select'}
+        ),
+        empty_label='Select a customer'
+    )
     class Meta:
         model = Project
-        fields = ['code', 'name', 'description', 'start_date', 'end_date','team']
+        fields = ['code', 'name', 'description', 'start_date', 'end_date','team','customer']
         widgets = {
             'code': forms.TextInput(attrs={'placeholder': 'ff-NNNN', 'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
