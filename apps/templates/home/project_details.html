@@ -57,14 +57,14 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between">
                     <h4 class="card-title col-3">Timesheets for Project: {{ project.name }}</h4>
-                    {% if user.is_superuser or user.is_staff and not biweekly_ranges is none %}
+                    {% if user.is_superuser or user.is_staff %}
                     <form class="d-flex justify-content-end align-items-center col-9" method="post" id="date-range-form">
                         {% csrf_token %}
-                        <label for="date_range">Select Date Range to export:</label>
+                        <label for="date_range">Select month to export:</label>
                         <select class="form-control option-background col-3 mr-5 ml-3" name="date_range" id="date_range">
-                          {% for range in biweekly_ranges %}    
-                            <option class="form-control option-background" value="{{ range.biweekly_start }} to {{ range.biweekly_end }}">
-                              {{ range.biweekly_start }} to {{ range.biweekly_end }}
+                          {% for month in dates %}    
+                            <option class="form-control option-background" value="{{ month.month_start }} to {{ month.month_end }}">
+                              {{month.month}}
                             </option>
                           {% endfor %}
                         </select>
@@ -257,8 +257,10 @@
             
             // Assuming the selected value is in the format "start_date to end_date"
             const [startDate, endDate] = selectedValue.split(' to ');
+            
 
             exportLink.href = `{% url 'export_project_based_timesheet_summary' project_id=project.id %}?start_date=${startDate}&end_date=${endDate}`;
+            
         }
     </script>
 

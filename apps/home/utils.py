@@ -1,3 +1,4 @@
+import calendar
 import io
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter #type:ignore   
@@ -8,6 +9,8 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER  # type: ignore #
 from reportlab.platypus import Paragraph #type:ignore
 from datetime import timedelta, datetime
 from .models import Timesheet
+from dateutil.relativedelta import relativedelta
+
 
 
 ##########################################
@@ -40,8 +43,40 @@ def getBiWeeklyRanges():
         return biweekly_ranges[::-1]
 
 
+def get_report_ready_months():
+    # Get the earliest date from the Timesheet model
+    earliest_date = Timesheet.objects.earliest('date').date
+    # Get the current date
+    end_date = datetime.now().date()
+
+    # Initialize a list to hold the months
+    months = []
+
+    # Start from the earliest date and go up to the current date
+    current_date = earliest_date
+    while current_date <= end_date:
+        # Get the start and end dates of the current month
+        start_of_month = current_date.replace(day=1).strftime('%d/%m/%Y')
+        _, last_day = calendar.monthrange(current_date.year, current_date.month)
+        end_of_month = current_date.replace(day=last_day).strftime('%d/%m/%Y')
+
+        # Append the month data to the list
+        months.append({
+            'month': current_date.strftime('%B %Y'),
+            'month_start': start_of_month,
+            'month_end': end_of_month
+        })
+
+        # Move to the next month
+        current_date += relativedelta(months=1)
+
+    print(months)
+    return months
+
+
+
 #generates the pdf for project based report
-def generate_project_report(filename, project, timesheets, duration, total):
+def generate_project_report(project, timesheets, duration, filename):
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -66,24 +101,26 @@ def generate_project_report(filename, project, timesheets, duration, total):
     elements.append(Paragraph(f"{project.team}", styles['Title']))
     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
     elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
-    elements.append(Paragraph(f"{duration['pStart']} to {duration['cEnd']}", styles['Normal']))
+    elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
     elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
 
     # Create table data
     table_data = [
-        ['Date','Employee', 'Description of Work', 'Hours Worked'],
+        ['Employee','Customer','Project', 'Description', 'Hours Worked'],
     ]
     
     # Add data from previous and current timesheets
-    for week_key in ['previous', 'current']:
-        week_timesheets = timesheets[week_key]
-        for timesheet in week_timesheets:
+    total_hours_worked = 0
+    for week in timesheets:
+        for timesheet in week:
             table_data.append([
-                timesheet.date.strftime('%d-%m-%Y'),
                 timesheet.employee,
+                timesheet.project.customer,
+                timesheet.project.name,
                 timesheet.description,
                 timesheet.hours_worked,
             ])
+            total_hours_worked += timesheet.hours_worked
 
     # Create table
     table = Table(table_data,colWidths=[doc.width / 4.0] * len(table_data[0]))
@@ -100,7 +137,7 @@ def generate_project_report(filename, project, timesheets, duration, total):
     elements.append(table)
 
     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Total hours worked: {total['previous'] + total['current']} hours", styles['Normal']))
+    elements.append(Paragraph(f"Total hours worked: {total_hours_worked} hours", styles['Normal']))
     
     # Build PDF
     doc.build(elements)
@@ -112,79 +149,8 @@ def generate_project_report(filename, project, timesheets, duration, total):
     
     return response
 
-#creates the employee report pdf
-def generate_employee_report(employee,timesheets, filename, duration):
-    print("working till now")
-    
-#     # Create a response object and set content type
-#     response = HttpResponse(content_type='application/pdf')
-#     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
-#     # Create a PDF object
-#     buffer = io.BytesIO()
-#     doc = SimpleDocTemplate(buffer, pagesize=letter)
-#     elements = []
 
-#     # Define styles
-#     styles = getSampleStyleSheet()
 
-#     style_left = ParagraphStyle(
-#     'LeftAligned',
-#     parent=styles['Normal'],
-#     alignment=0,  # Left alignment
-#     fontSize=12,
-#     spaceAfter=6
-# )
-
-#     # Add company name and project name
-#     elements.append(Paragraph(f"{project.team}", styles['Title']))
-#     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-#     elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
-#     elements.append(Paragraph(f"{duration['pStart']} to {duration['cEnd']}", styles['Normal']))
-#     elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
-
-#     # Create table data
-#     table_data = [
-#         ['Date','Employee', 'Description of Work', 'Hours Worked'],
-#     ]
-    
-#     # Add data from previous and current timesheets
-#     for week_key in ['previous', 'current']:
-#         week_timesheets = timesheets[week_key]
-#         for timesheet in week_timesheets:
-#             table_data.append([
-#                 timesheet.date.strftime('%d-%m-%Y'),
-#                 timesheet.employee,
-#                 timesheet.description,
-#                 timesheet.hours_worked,
-#             ])
-
-#     # Create table
-#     table = Table(table_data,colWidths=[doc.width / 4.0] * len(table_data[0]))
-#     table.setStyle(TableStyle([
-#         ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
-#         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-#         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-#         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-#         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-#         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-#         ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
-#     ]))
-    
-#     elements.append(table)
-
-#     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-#     elements.append(Paragraph(f"Total hours worked: {total['previous'] + total['current']} hours", styles['Normal']))
-    
-#     # Build PDF
-#     doc.build(elements)
-    
-#     # Get the value of the BytesIO buffer and write it to the response
-#     pdf = buffer.getvalue()
-#     buffer.close()
-#     response.write(pdf)
-    
-#     return response
 
 
 # Function to generate employee report PDF

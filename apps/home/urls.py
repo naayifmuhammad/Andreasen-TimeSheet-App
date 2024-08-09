@@ -33,7 +33,6 @@ urlpatterns = [
     path('export_project_based_timesheet_summary/<int:project_id>', views.export_project_based_timesheet_summary, name='export_project_based_timesheet_summary'),
     #path for the button to export the employee report
     path('print_employee_report/', views.print_employee_report, name='print_employee_report'),
-
     
     path('update-username/', views.update_username, name='update_username'),
     path('update-password/', views.update_password, name='update_password'),

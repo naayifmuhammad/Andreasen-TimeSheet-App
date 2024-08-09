@@ -9,7 +9,7 @@
 
 {% block content %}
 
-<div class="content" id="content-to-print">
+<div class="content" id="report-div">
     <div class="row">
         <div class="col-md-12">
             <div class="card mt-5">
@@ -75,38 +75,23 @@
 
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-    document.getElementById('generate-pdf').addEventListener('click', function() {
-        const button = this;
-
-            // Hide the button
-            button.style.display = 'none';
-
-        const { jsPDF } = window.jspdf;
-
-        html2canvas(document.getElementById('content-to-print')).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210; // A4 width in mm
-            const pageHeight = 295; // A4 height in mm
-            const imgHeight = canvas.height * imgWidth / canvas.width;
-            let heightLeft = imgHeight;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, -heightLeft, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-            
-            pdf.save('report.pdf');
-            // Optionally show the button again (if needed)
-            button.style.display = 'block';
-        });
-    });
+    window.onload = function () {
+    document.getElementById("generate-pdf")
+        .addEventListener("click", () => {
+            const report = this.document.getElementById("report-div");
+            console.log(report);
+            console.log(window);
+            var opt = {
+                margin: 1,
+                filename: 'report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().from(report).set(opt).save();
+        })
+}
 </script>
+
 {% endblock javascripts %}
