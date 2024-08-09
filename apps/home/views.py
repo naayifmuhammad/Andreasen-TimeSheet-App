@@ -196,27 +196,15 @@ def print_employee_report(request, startDate=None, endDate=None):
         weekranges = generate_week_ranges_from_given_startdate_till_date(startDate,endDate)
     if request.user.is_superuser or request.user.is_staff: 
         for weekrange in weekranges:
-            timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekrange['start'].strftime("%Y-%m-%d"),weekrange['end'].strftime("%Y-%m-%d"))).order_by('date')
+            weekrange['timesheets'] = Timesheet.objects.filter(employee=employee, date__range=(weekrange['start'].strftime("%Y-%m-%d"),weekrange['end'].strftime("%Y-%m-%d"))).order_by('date')
         
-        previous_week_timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekranges[0]['start'].strftime("%Y-%m-%d"),weekranges[0]['end'].strftime("%Y-%m-%d"))).order_by('date')
-        prev_total = 0
-        for sheet in previous_week_timesheets:
-            prev_total += sheet.hours_worked
-
-        current_total = 0
-        current_week_timesheets = Timesheet.objects.filter(employee=employee, date__range=(weekranges[1]['start'].strftime("%Y-%m-%d"),weekranges[1]['end'].strftime("%Y-%m-%d"))).order_by('date')
-        for sheet in current_week_timesheets:
-            current_total += sheet.hours_worked
+        for weekrange in weekranges:
+            for timesheet in weekrange['timesheets']:
+                timesheet.day = timesheet.date.strftime("%A")
         
-    
-    for week in [previous_week_timesheets,current_week_timesheets]:
-        for timesheet in week:
-            timesheet.day = timesheet.date.strftime("%A")
-
-    duration = {'prev_start': weekranges[0]['start'], "prev_end": weekranges[0]["end"], "curr_start": weekranges[1]["start"]  ,'curr_end' : weekranges[1]["end"]}
-    filename = f"{employee.username}-{duration['prev_start']}-to-{duration['curr_end']}-report.pdf"
-    timesheets= [previous_week_timesheets, current_week_timesheets],
-    return generate_employee_report(employee,timesheets, filename, duration, prev_total+current_total)
+    duration = {'start': startDate, 'end' : endDate}
+    filename = f"{employee.username}-{duration['start']}-to-{duration['end']}-report.pdf"
+    return generate_employee_report(employee,weekranges, filename, duration)
 
 
 @login_required(login_url="/login/")
