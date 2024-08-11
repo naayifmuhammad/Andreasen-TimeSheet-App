@@ -63,11 +63,28 @@
           </div>
         <div class="col-md-12">
             <div class="card">
-                {% if not user.is_superuser %}
-                <div class="card-header">
-                    <h4 class="card-title">Active Projects</h4>
+
+                <div class="card-header d-flex col-12">
+                    <h4 class="card-title  col-4">Active Projects</h4>
+                    {% if user.is_staff %}
+                    <form class="d-flex justify-content-end align-items-center col-8" method="post" id="date-range-form" action="{% url 'export_project_based_timesheet_summary'%}">
+                        {% csrf_token %}
+                        <label for="date_range">Select month to export:</label>
+                        <select class="form-control option-background col-3 mr-5 ml-3" name="date_range" id="date_range">
+                          {% for month in dates %}    
+                            <option class="form-control option-background" value="{{ month.month_start }} to {{ month.month_end }}">
+                              {{month.month}}
+                            </option>
+                          {% endfor %}
+                        </select>
+                        <!-- Hidden input to hold selected project IDs -->
+                        <input type="hidden" name="selected_projects" id="selected-projects">
+                        <button id="export-link" class="btn btn-primary" disabled type="submit" >Export Report</button>
+                    </form>
+                    {% endif %}
                 </div>
-                {% else %}
+
+                {% if user.is_superuser %}
                 <div class="filter-teams-dropdown col-5 pt-3">
                     <select name="" class="form-control option-background col-5" id="teams-dropdown">
                         <option value="" selected>All</option>
@@ -85,6 +102,7 @@
                         <table class="table tablesorter" id="active-projects-table">
                             <thead class="text-primary">
                                 <tr>
+                                    <th>Mark for export</th>
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Description</th>
@@ -98,9 +116,10 @@
                             </thead>
                             <tbody>
                                 {% for project in active_projects %}
-                                <tr onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">
+                                <tr>
+                                    <td><input type="checkbox" name="mark-for-export" id="{{project.id}}"></td>
                                     <td>{{ project.code }}</td>
-                                    <td>{{ project.name }}</td>
+                                    <td onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">{{ project.name }}</td>
                                     <td>{{ project.description }}</td>
                                     <td>{{ project.start_date }}</td>
                                     {% if user.is_superuser %}
@@ -169,5 +188,35 @@
 
     <!-- Specific Page JS goes HERE  -->
     {% block javascripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name="mark-for-export"]');
+        const submitButton = document.getElementById('export-link');
+            
+        // Function to check if any checkbox is checked
+        function toggleSubmitButton() {
+            const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+            submitButton.disabled = !anyChecked;
+        }
+    
+        // Attach the function to each checkbox's change event
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', toggleSubmitButton);
+    });
+
+    // Initial check in case the user already checked some boxes before the page fully loaded
+    toggleSubmitButton();
+});
+        document.getElementById('date-range-form').addEventListener('submit', function (event) {
+            // Get all checkboxes with the name 'mark-for-export'
+            const checkboxes = document.querySelectorAll('input[name="mark-for-export"]:checked');
+
+            // Collect the values of the checked checkboxes
+            const selectedProjects = Array.from(checkboxes).map(checkbox => checkbox.id);
+
+            // Set the value of the hidden input field with the selected project IDs
+            document.getElementById('selected-projects').value = selectedProjects.join(',');
+        });
+    </script>
 
     {% endblock javascripts %}

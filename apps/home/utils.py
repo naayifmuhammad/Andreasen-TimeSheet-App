@@ -44,39 +44,43 @@ def getBiWeeklyRanges():
 
 
 def get_report_ready_months():
-    # Get the earliest date from the Timesheet model
-    earliest_date = Timesheet.objects.earliest('date').date
-    # Get the current date
-    end_date = datetime.now().date()
+    try:
+        # Get the earliest date from the Timesheet model
+        earliest_date = Timesheet.objects.earliest('date').date
+        # Get the current date
+        end_date = datetime.now().date()
 
-    # Initialize a list to hold the months
-    months = []
+        # Initialize a list to hold the months
+        months = []
 
-    # Start from the earliest date and go up to the current date
-    current_date = earliest_date
-    while current_date <= end_date:
-        # Get the start and end dates of the current month
-        start_of_month = current_date.replace(day=1).strftime('%d/%m/%Y')
-        _, last_day = calendar.monthrange(current_date.year, current_date.month)
-        end_of_month = current_date.replace(day=last_day).strftime('%d/%m/%Y')
+        # Start from the earliest date and go up to the current date
+        current_date = earliest_date
+        while current_date <= end_date:
+            # Get the start and end dates of the current month
+            start_of_month = current_date.replace(day=1).strftime('%d/%m/%Y')
+            _, last_day = calendar.monthrange(current_date.year, current_date.month)
+            end_of_month = current_date.replace(day=last_day).strftime('%d/%m/%Y')
 
-        # Append the month data to the list
-        months.append({
-            'month': current_date.strftime('%B %Y'),
-            'month_start': start_of_month,
-            'month_end': end_of_month
-        })
+            # Append the month data to the list
+            months.append({
+                'month': current_date.strftime('%B %Y'),
+                'month_start': start_of_month,
+                'month_end': end_of_month
+            })
 
-        # Move to the next month
-        current_date += relativedelta(months=1)
+            # Move to the next month
+            current_date += relativedelta(months=1)
+        return months
+    except Timesheet.DoesNotExist:
+        # Handle the exception when no Timesheets exist
+        return None
 
-    print(months)
-    return months
+
 
 
 
 #generates the pdf for project based report
-def generate_project_report(project, timesheets, duration, filename):
+def generate_project_report(project=None,team=None, timesheets=None, duration=None, filename=None):
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -98,9 +102,10 @@ def generate_project_report(project, timesheets, duration, filename):
 )
 
     # Add company name and project name
-    elements.append(Paragraph(f"{project.team}", styles['Title']))
+    elements.append(Paragraph(f"{team}", styles['Title']))
     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
+    if project:
+        elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
     elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
     elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
 

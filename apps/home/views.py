@@ -90,33 +90,44 @@ def create_timesheet(request):
 
 #latest - to export project based timesheet. triggered from project details page of admin
 @login_required(login_url="/login/")
-def export_project_based_timesheet_summary(request,project_id=None, start_date=None,end_date=None):
-
-    start_date = datetime.strptime(request.GET.get('start_date'),'%d/%m/%Y').date()
-    end_date = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
-
-    project = get_object_or_404(Project, pk=project_id)
-    
-    week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
-
-    weekly_timesheets = []
-    for week in week_ranges:
-        weekly_timesheets.append(Timesheet.objects.filter(project=project_id , date__range=(week['start'].strftime("%Y-%m-%d"),week['end'].strftime("%Y-%m-%d"))).order_by('date'))
-
-
-
-    # previous_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(week_ranges[0]['start'].strftime("%Y-%m-%d"),week_ranges[0]['end'].strftime("%Y-%m-%d"))).order_by('date')
-    # current_week_timesheets =  Timesheet.objects.filter(project=project_id , date__range=(week_ranges[1]['start'].strftime("%Y-%m-%d"),week_ranges[1]['end'].strftime("%Y-%m-%d"))).order_by('date') 
-    # previous_week_total_time_worked = current_week_total_time_worked = 0
-    # if previous_week_timesheets:
-    #     previous_week_total_time_worked = previous_week_timesheets.aggregate(p_total_hours=Sum('hours_worked'))['p_total_hours']
+def export_project_based_timesheet_summary(request):
+    if request.method == 'GET':
+        start_date = datetime.strptime(request.GET.get('start_date'),'%d/%m/%Y').date()
+        end_date = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
+        project_id = request.GET.get('project_id')
+        projects = get_object_or_404(Project, pk=project_id)
         
-    # if current_week_timesheets:
-    #     current_week_total_time_worked = current_week_timesheets.aggregate(c_total_hours=Sum('hours_worked'))['c_total_hours']    
-    
-   
+        week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
+
+        weekly_timesheets = []
+        for week in week_ranges:
+            weekly_timesheets.append(Timesheet.objects.filter(project=project_id , date__range=(week['start'].strftime("%Y-%m-%d"),week['end'].strftime("%Y-%m-%d"))).order_by('date'))
+    else:
+        date_range = request.POST.get('date_range')
+        start_date, end_date = date_range.split(' to ')
+
+        start_date = datetime.strptime(start_date,'%d/%m/%Y').date()
+        end_date = datetime.strptime(end_date, '%d/%m/%Y').date()
+
+        week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
+        
+        
+        selected_projects = request.POST.get('selected_projects')
+        
+        if selected_projects:
+            # Split the selected_projects string to get the list of project IDs
+            selected_project_ids = selected_projects.split(',')
+        
+        weekly_timesheets = []
+        for week in week_ranges:
+            for project_id in selected_project_ids:
+                weekly_timesheets.append(Timesheet.objects.filter(project=project_id , date__range=(week['start'].strftime("%Y-%m-%d"),week['end'].strftime("%Y-%m-%d"))).order_by('date'))
+
+
+
     context = {
-    'project' : project,
+    'project' : projects if request.method== 'GET' else None,
+    'team' : request.user.team,
     'timesheets' : weekly_timesheets,
     'duration' : {'start': start_date.strftime('%d-%m-%y'),'end': end_date.strftime('%d-%m-%y')},
     'filename' : f"report-({start_date.strftime('%d-%m-%y')}-to{end_date.strftime('%d-%m-%y')}).pdf"
@@ -322,6 +333,7 @@ def projects_tab(request):
         'active_projects': active_projects,
         'active_project_count': active_project_count,
         'inactive_project_count' : inactive_project_count,
+        'dates' : get_report_ready_months(),
     }
     if request.user.is_superuser:
         context['teams'] = teams

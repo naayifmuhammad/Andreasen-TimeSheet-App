@@ -71,7 +71,6 @@
                         <a href="#" id="export-link" class="btn btn-primary" onclick="updateExportLink()">Export Report</a>
                     </form>
                     {% endif %}
-                    <!-- <a href="{% url 'export_project_based_timesheet_summary' project_id=project.id %}" class="btn btn-primary">Export Report</a> -->
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -257,9 +256,8 @@
             
             // Assuming the selected value is in the format "start_date to end_date"
             const [startDate, endDate] = selectedValue.split(' to ');
-            
 
-            exportLink.href = `{% url 'export_project_based_timesheet_summary' project_id=project.id %}?start_date=${startDate}&end_date=${endDate}`;
+            exportLink.href = `{% url 'export_project_based_timesheet_summary'%}?project_id=${projectId}&start_date=${startDate}&end_date=${endDate}`;
             
         }
     </script>
