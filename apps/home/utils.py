@@ -123,7 +123,7 @@ def generate_project_report(project, timesheets, duration, filename):
             total_hours_worked += timesheet.hours_worked
 
     # Create table
-    table = Table(table_data,colWidths=[doc.width / 4.0] * len(table_data[0]))
+    table = Table(table_data,colWidths=[doc.width / 5.0] * len(table_data[0]))
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
