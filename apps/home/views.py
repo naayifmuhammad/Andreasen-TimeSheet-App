@@ -92,6 +92,7 @@ def create_timesheet(request):
 @login_required(login_url="/login/")
 def export_project_based_timesheet_summary(request):
     if request.method == 'GET':
+        single_mode = True
         start_date = datetime.strptime(request.GET.get('start_date'),'%d/%m/%Y').date()
         end_date = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
         project_id = request.GET.get('project_id')
@@ -103,6 +104,7 @@ def export_project_based_timesheet_summary(request):
         for week in week_ranges:
             weekly_timesheets.append(Timesheet.objects.filter(project=project_id , date__range=(week['start'].strftime("%Y-%m-%d"),week['end'].strftime("%Y-%m-%d"))).order_by('date'))
     else:
+        single_mode = False
         date_range = request.POST.get('date_range')
         start_date, end_date = date_range.split(' to ')
 
@@ -121,11 +123,23 @@ def export_project_based_timesheet_summary(request):
         weekly_timesheets = []
         for week in week_ranges:
             for project_id in selected_project_ids:
-                weekly_timesheets.append(Timesheet.objects.filter(project=project_id , date__range=(week['start'].strftime("%Y-%m-%d"),week['end'].strftime("%Y-%m-%d"))).order_by('date'))
+                project_timesheets = Timesheet.objects.filter(
+                    project=project_id, 
+                    date__range=(week['start'].strftime("%Y-%m-%d"), week['end'].strftime("%Y-%m-%d"))
+                ).order_by('date')
 
+                if project_timesheets.exists():
+                    project_info = {
+                        'project_id': project_timesheets[0].project.id,
+                        'project_name': project_timesheets[0].project.name,
+                        'customer_name': project_timesheets[0].project.customer.name,
+                        'timesheets': project_timesheets,
+                    }
+                    weekly_timesheets.append(project_info)
 
 
     context = {
+    'single_mode' : single_mode,
     'project' : projects if request.method== 'GET' else None,
     'team' : request.user.team,
     'timesheets' : weekly_timesheets,
@@ -443,19 +457,22 @@ def timesheet_entry(request, project_id):
 
     form = TimesheetForm()
 
-    week_dates = get_current_week_dates()
-    week = {
-        'start' : week_dates[0],
-        'end' : week_dates[-1],
-    }
+    prev_curre_week_dates = get_current_and_previous_workweekranges()
 
+    week_points = {
+        'p_start' : prev_curre_week_dates['previous'][0].strftime("%d/%m/%Y"),
+        'p_end' : prev_curre_week_dates['previous'][-1].strftime("%d/%m/%Y"),
+        'c_start' : prev_curre_week_dates['current'][0].strftime("%d/%m/%Y"),
+        'c_end' : prev_curre_week_dates['current'][-1].strftime("%d/%m/%Y")
+    }
 
     context = {
         'form': form,
         'project' : project,
-        'week' : week,
+        'week_points' : week_points,
+        'business_weeks': prev_curre_week_dates
     }
-    
+
     return render(request, 'home/new-timesheet-entry.html', context)
 
 

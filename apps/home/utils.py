@@ -31,6 +31,7 @@ def generate_week_ranges_from_given_startdate_till_date(start_date=None, end_dat
         start_of_week += timedelta(days=7)
     return week_ranges
 
+
 def getBiWeeklyRanges():
     biweekly_ranges = []
     weekranges = generate_week_ranges_from_given_startdate_till_date()
@@ -80,7 +81,7 @@ def get_report_ready_months():
 
 
 #generates the pdf for project based report
-def generate_project_report(project=None,team=None, timesheets=None, duration=None, filename=None):
+def generate_project_report(single_mode, project=None,team=None, timesheets=None, duration=None, filename=None):
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -101,34 +102,72 @@ def generate_project_report(project=None,team=None, timesheets=None, duration=No
     spaceAfter=6
 )
 
-    # Add company name and project name
-    elements.append(Paragraph(f"{team}", styles['Title']))
-    elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    if project:
-        elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
-    elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
-    elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
 
-    # Create table data
-    table_data = [
-        ['Employee','Customer','Project', 'Description', 'Hours Worked'],
-    ]
+    if single_mode:
+        
+        elements.append(Paragraph(f"{team}", styles['Title']))
+        elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
+        elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
+        elements.append(Paragraph(f"Customer: {project.customer.name}", style_left))
+        elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
+        elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
+
+        # Create table data
+        table_data = [
+            ['Date','Employee', 'Description', 'Hours Worked'],
+        ]
+
+        # Add data from previous and current timesheets
+        total_hours_worked = 0
+        for week in timesheets:
+            for timesheet in week:
+                table_data.append([
+                    timesheet.date,
+                    timesheet.employee,
+                    timesheet.description,
+                    timesheet.hours_worked,
+                ])
+                total_hours_worked += timesheet.hours_worked
+        table_data.append(["","","",""])
+        table_data.append(["","","Total:",total_hours_worked])
     
-    # Add data from previous and current timesheets
-    total_hours_worked = 0
-    for week in timesheets:
-        for timesheet in week:
+    else:
+        
+        elements.append(Paragraph(f"{team}", styles['Title']))
+        elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
+        elements.append(Paragraph(f"Project Report", style_left))
+        elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
+        elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
+
+        # Create table data
+        table_data = [
+            ['Date','Employee', 'Description', 'Hours Worked'],
+        ]
+        total_hours_worked = 0
+        for project_info in timesheets:
+            # Add a header row for the project
             table_data.append([
-                timesheet.employee,
-                timesheet.project.customer,
-                timesheet.project.name,
-                timesheet.description,
-                timesheet.hours_worked,
+                f"{project_info['project_id']}",
+                f"{project_info['project_name']}",
+                f"{project_info['customer_name']}",
+                '',
             ])
-            total_hours_worked += timesheet.hours_worked
+
+            for timesheet in project_info['timesheets']:
+                table_data.append([
+                    timesheet.date,
+                    timesheet.employee,
+                    timesheet.description,
+                    timesheet.hours_worked,
+                ])
+                total_hours_worked += timesheet.hours_worked
+
+            # Add a blank row for spacing
+            table_data.append(["","","",""])
+        table_data.append(["", "", "Total:",total_hours_worked])
 
     # Create table
-    table = Table(table_data,colWidths=[doc.width / 5.0] * len(table_data[0]))
+    table = Table(table_data,colWidths=[doc.width / 4.0] * len(table_data[0]))
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),

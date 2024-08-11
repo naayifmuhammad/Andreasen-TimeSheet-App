@@ -14,7 +14,11 @@
             <div class="card">
                 <div class="card-header">
                     <h4 class="card-title">New Time Sheet Entry for <b>{{ project.name }}</b></h4>
-                    <h5>{{week.start | date:'d-M-Y'}} - {{week.end | date:'d-M-Y'}}</h5>
+                    <div class="week-navigation">
+                        <button id="previous-week" class="btn btn-secondary"></button>
+                        <span id="week-range" class="week-range"><span id="week-display"></span></span>
+                        <button id="next-week" class="btn btn-secondary" disabled></button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <form method="post" action="{% url 'add_timesheet_entry' project_id=project.id %}">
@@ -34,4 +38,27 @@
 
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    
+    function goToPreviousWeek() {
+        document.getElementById('previous-week').disabled = true; // Enable "Next Week" button
+        document.getElementById('next-week').disabled = false; // Enable "Next Week" button
+        document.getElementById('week-display').textContent = '{{week_points.p_start}} to {{week_points.p_end}}'
+    }
+    
+    function goToNextWeek() {
+        document.getElementById('next-week').disabled = true; // Enable "Next Week" button
+        document.getElementById('previous-week').disabled = false; // Disable "Next Week" button if it's the current week
+        document.getElementById('week-display').textContent = '{{week_points.c_start}} to {{week_points.c_end}}'
+    }
+
+    // Initial display of the current week
+    goToNextWeek();
+
+    // Attach event listeners
+    document.getElementById('previous-week').addEventListener('click', goToPreviousWeek);
+    document.getElementById('next-week').addEventListener('click', goToNextWeek);
+});
+</script>
 {% endblock javascripts %}

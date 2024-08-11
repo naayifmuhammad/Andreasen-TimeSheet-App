@@ -3,8 +3,21 @@ from datetime import datetime, timedelta
 def get_current_week_dates():
     today = datetime.today()
     start_of_week = today - timedelta(days=today.weekday())
-    week_dates = [start_of_week + timedelta(days=i) for i in range(5)]  # Monday to Friday
-    return week_dates
+    current_week_dates = [start_of_week + timedelta(days=i) for i in range(5)]  # Monday to Friday
+    return current_week_dates
+
+def get_previous_week_dates():
+    today = datetime.today()
+    # Start of the current week (Monday)
+    start_of_current_week = today - timedelta(days=today.weekday())
+    # Start of the previous week (Monday)
+    start_of_previous_week = start_of_current_week - timedelta(days=7)
+    # List of dates from Monday to Friday of the previous week
+    previous_week_dates = [start_of_previous_week + timedelta(days=i) for i in range(5)]
+    return previous_week_dates
+
+def get_current_and_previous_workweekranges():
+    return {"previous":get_previous_week_dates(), 'current': get_current_week_dates()}
 
 def fetchWeekDropdown():
     week_choices = [(date.strftime('%Y-%m-%d'), date.strftime('%A')) for date in get_current_week_dates()]

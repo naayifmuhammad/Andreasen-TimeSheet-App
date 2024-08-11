@@ -13378,3 +13378,45 @@ Copyright (c) 2015 Daniel Eden
 .print-table{
   font-size: 15px;
 }
+.week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 5px;
+}
+
+#previous-week, #next-week {
+  background-color: #393b3e; /* Bootstrap primary color */
+  border: none;
+  color: white;
+  padding: 5px 7px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 10px;
+  border-radius: 10%;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#previous-week:hover, #next-week:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+  transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+#previous-week:disabled, #next-week:disabled {
+  background-color: #c0c0c0; /* Disabled color */
+  cursor: not-allowed;
+}
+
+.week-range {
+  font-size: 14px;
+}
+
+#previous-week:before {
+  content: '<'; /* Left arrow */
+}
+
+#next-week:after {
+  content: '>'; /* Right arrow */
+}
