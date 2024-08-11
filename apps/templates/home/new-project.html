@@ -20,9 +20,11 @@
                         {% csrf_token %}
                         <div class="card-body px-5 py-3">
                             {{ form.as_p }}
+                            {% if user.is_superuser %}
                             <button type="button" class="btn form-class" data-toggle="modal" data-target="#addTeamModal">
-                                Create new team
+                              Create new team
                             </button>
+                            {% endif %}
                             <button type="button" class="btn form-class" data-toggle="modal" data-target="#addCustomerModal">
                                 Add new customer
                             </button>
