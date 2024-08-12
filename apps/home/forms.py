@@ -8,17 +8,22 @@ from apps.authentication.models import CustomUser
 from .date_fetcher import fetchWeekDropdown
 
 class TimesheetForm(forms.ModelForm):
-    date = forms.ChoiceField(
-        choices=fetchWeekDropdown(),
-        widget=forms.Select(
-            attrs={'class': 'form-control option-background col-2'}
-        ),
-        label='Choose day'
-    )
+    # date = forms.ChoiceField(
+    #     choices=[],
+    #     widget=forms.Select(
+    #         attrs={'class': ''}
+    #     ),
+    #     label='Choose day'
+    # )
+
+    # def __init__(self, *args, **kwargs):
+    #     week_choices = kwargs.pop('week_choices', [])
+    #     super().__init__(*args, **kwargs)
+    #     self.fields['date'].choices = week_choices
 
     class Meta:
         model = Timesheet
-        fields = ['date', 'hours_worked', 'description']
+        fields = ['hours_worked', 'description']
         validators = [MaxValueValidator(24)]
         max_digits = 2,
         widgets = {
@@ -36,7 +41,7 @@ class ProjectForm(forms.ModelForm):
     customer = forms.ModelChoiceField(
         queryset=Customer.objects.all(),
         widget=forms.Select(
-            attrs={'class': 'form-control', 'id': 'customer-select'}
+            attrs={'class': 'form-control option-background', 'id': 'customer-select'}
         ),
         empty_label='Select a customer'
     )

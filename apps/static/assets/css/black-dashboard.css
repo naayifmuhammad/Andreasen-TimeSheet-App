@@ -13420,3 +13420,6 @@ Copyright (c) 2015 Daniel Eden
 #next-week:after {
   content: '>'; /* Right arrow */
 }
+.always-black{
+  color: black !important;
+}

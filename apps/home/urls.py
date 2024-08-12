@@ -25,6 +25,7 @@ urlpatterns = [
     
     path('active_projects/', views.timesheet, name='timesheet'),  # URL for timesheet page
     path('timesheet_entry/<int:project_id>/', views.timesheet_entry, name='timesheet_entry'),
+    path('get_week_dates/<str:week_type>/', views.get_week_dates, name='get_week_dates'),
     path('project_details/<int:project_id>/', views.project_details, name='project_details'),
     path('add_timesheet_entry/<int:project_id>/', views.add_timesheet_entry, name='add_timesheet_entry'),
     path('bi-weekly/', views.view_weekly_timesheet, name='view_weekly_timesheet'),

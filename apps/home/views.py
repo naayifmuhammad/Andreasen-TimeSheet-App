@@ -477,6 +477,17 @@ def timesheet_entry(request, project_id):
 
 
 @login_required(login_url="/login/")
+def get_week_dates(request, week_type):
+    if week_type == 'current':
+        week_dates = get_current_week_dates()
+    elif week_type == 'previous':
+        week_dates = get_previous_week_dates()
+    else:
+        week_dates = []
+    week_choices = [(date.strftime('%Y-%m-%d'), date.strftime('%A')) for date in week_dates]
+    return JsonResponse({'week_choices': week_choices})
+
+@login_required(login_url="/login/")
 def view_profile(request):
     return render(request, 'home/user.html')
 
@@ -505,6 +516,7 @@ def add_timesheet_entry(request, project_id):
         form = TimesheetForm(request.POST)
         if form.is_valid():
             timesheet = form.save(commit=False)
+            timesheet.date = request.POST['date']
             timesheet.employee = request.user
             timesheet.project = project
             timesheet.save()
