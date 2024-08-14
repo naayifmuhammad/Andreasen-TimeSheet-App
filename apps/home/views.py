@@ -91,8 +91,6 @@ def create_timesheet(request):
 def profile(request):
     return redirect(request,'home/users.html')
 
-
-
 #latest - to export project based timesheet. triggered from project details page of admin
 @login_required(login_url="/login/")
 def export_project_based_timesheet_summary(request):
@@ -118,7 +116,6 @@ def export_project_based_timesheet_summary(request):
 
         week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
         
-        
         selected_projects = request.POST.get('selected_projects')
         
         if selected_projects:
@@ -131,7 +128,7 @@ def export_project_based_timesheet_summary(request):
                 project_timesheets = Timesheet.objects.filter(
                     project=project_id, 
                     date__range=(week['start'].strftime("%Y-%m-%d"), week['end'].strftime("%Y-%m-%d"))
-                ).order_by('date')
+                ).order_by('employee')
 
                 if project_timesheets.exists():
                     project_info = {

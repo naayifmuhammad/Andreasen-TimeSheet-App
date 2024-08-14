@@ -102,7 +102,9 @@
                         <table class="table tablesorter" id="active-projects-table">
                             <thead class="text-primary">
                                 <tr>
+                                    {% if user.is_staff %}
                                     <th>Mark for export</th>
+                                    {% endif %}
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Description</th>
@@ -117,7 +119,9 @@
                             <tbody>
                                 {% for project in active_projects %}
                                 <tr>
+                                    {% if user.is_staff %}
                                     <td><input type="checkbox" name="mark-for-export" id="{{project.id}}"></td>
+                                    {% endif %}
                                     <td>{{ project.code }}</td>
                                     <td onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">{{ project.name }}</td>
                                     <td>{{ project.description }}</td>
