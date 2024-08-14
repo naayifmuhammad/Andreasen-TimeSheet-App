@@ -57,7 +57,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between">
                     <h4 class="card-title col-3">Timesheets for Project: {{ project.name }}</h4>
-                    {% if user.is_superuser or user.is_staff %}
+                    {% if not user.is_superuser and user.is_staff %}
                     <form class="d-flex justify-content-end align-items-center col-9" method="post" id="date-range-form">
                         {% csrf_token %}
                         <label for="date_range">Select month to export:</label>

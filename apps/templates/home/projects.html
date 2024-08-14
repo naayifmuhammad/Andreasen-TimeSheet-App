@@ -66,7 +66,7 @@
 
                 <div class="card-header d-flex col-12">
                     <h4 class="card-title  col-4">Active Projects</h4>
-                    {% if user.is_staff %}
+                    {% if user.is_staff and not user.is_superuser %}
                     <form class="d-flex justify-content-end align-items-center col-8" method="post" id="date-range-form" action="{% url 'export_project_based_timesheet_summary'%}">
                         {% csrf_token %}
                         <label for="date_range">Select month to export:</label>

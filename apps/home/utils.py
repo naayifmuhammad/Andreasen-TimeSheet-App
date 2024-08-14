@@ -147,12 +147,12 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
         for project_info in timesheets:
             # Add a header row for the project
             table_data.append([
-                f"Project Code:{project_info['project_id']}",
+                f"{project_info['project_code']}",
                 f"{project_info['project_name']}",
                 f"{project_info['customer_name']}",
                 '',
             ])
-
+            total_for_this_project  = 0
             for timesheet in project_info['timesheets']:
                 table_data.append([
                     timesheet.date,
@@ -161,10 +161,12 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
                     timesheet.hours_worked,
                 ])
                 total_hours_worked += timesheet.hours_worked
+                total_for_this_project+=timesheet.hours_worked
 
             # Add a blank row for spacing
+            table_data.append(["","","Total:",total_for_this_project])
             table_data.append(["","","",""])
-        table_data.append(["", "", "Total:",total_hours_worked])
+        table_data.append(["", "", "Monthly Total:",total_hours_worked])
 
     # Create table
     table = Table(table_data,colWidths=[doc.width / 4.0] * len(table_data[0]))
@@ -282,7 +284,7 @@ def generate_employee_report(employee, weekranges, filename, duration):
         Paragraph(str(overAllTotalTimeWorked), styleN),
     ])
     # Create table with custom column widths
-    col_widths = [doc.width * 0.1, doc.width * 0.45, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09]
+    col_widths = [doc.width * 0.15, doc.width * 0.4, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09]
     table = Table(table_data, colWidths=col_widths)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),

@@ -135,6 +135,7 @@ def export_project_based_timesheet_summary(request):
 
                 if project_timesheets.exists():
                     project_info = {
+                        'project_code': project_timesheets[0].project.code,
                         'project_id': project_timesheets[0].project.id,
                         'project_name': project_timesheets[0].project.name,
                         'customer_name': project_timesheets[0].project.customer.name,
