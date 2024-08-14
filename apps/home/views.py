@@ -87,6 +87,11 @@ def create_timesheet(request):
     return render(request, 'home/timesheet.html', {'form': form})
 
 
+@login_required(login_url="/login/")
+def profile(request):
+    return redirect(request,'home/users.html')
+
+
 
 #latest - to export project based timesheet. triggered from project details page of admin
 @login_required(login_url="/login/")

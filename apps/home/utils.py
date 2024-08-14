@@ -147,7 +147,7 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
         for project_info in timesheets:
             # Add a header row for the project
             table_data.append([
-                f"{project_info['project_id']}",
+                f"Project Code:{project_info['project_id']}",
                 f"{project_info['project_name']}",
                 f"{project_info['customer_name']}",
                 '',

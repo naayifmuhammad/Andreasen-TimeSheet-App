@@ -35,6 +35,8 @@ urlpatterns = [
     #path for the button to export the employee report
     path('print_employee_report/', views.print_employee_report, name='print_employee_report'),
     
+
+    path('profile/', views.profile, name='profile'),
     path('update-username/', views.update_username, name='update_username'),
     path('update-password/', views.update_password, name='update_password'),
     path('update-email/', views.update_email, name='update_email'),

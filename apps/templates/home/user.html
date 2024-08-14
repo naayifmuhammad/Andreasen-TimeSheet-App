@@ -33,18 +33,24 @@
           {% csrf_token %}
           <div class="form-group">
             <label for="username">New Username</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="Enter new username">
+            <div class="username-container d-flex align-items-center">
+              <input type="text" class="form-control col-6 mr-2" id="username" name="username" placeholder="Enter new username">
+              <span>( Current:&nbsp{{user.username}} &nbsp)</span>
+            </div>
           </div>
           <button type="submit" class="btn btn-primary">Update Username</button>
         </form>
-
+        
         <!-- Update Password Form -->
         <form id="updatePasswordForm" method="POST" action="{% url 'update_password' %}">
           {% csrf_token %}
           <div class="form-group">
             <label for="password">New Password</label>
-            <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password">
+            <div class="password-container d-flex align-items-center">
+          <input type="password" class="form-control col-6 mr-2" id="password" name="password" placeholder="Enter new password">
+          <span class="d-flex">( Current: &nbsp;<p class="text-primary"> Strong </p> &nbsp;)</span>
           </div>
+        </div>
           <button type="submit" class="btn btn-primary">Update Password</button>
         </form>
 
@@ -73,7 +79,7 @@
             <div class="block block-four"></div>
             <a href="javascript:void(0)">
               <img class="avatar" src="{{ ASSETS_ROOT }}/img/company/avatar.jpg" alt="...">
-              <h5 class="title">{{ user.get_full_name() }}</h5>
+              <h5 class="title">{{ user.get_full_name }}</h5>
             </a>
             <p class="description">
               {{ user.email }}
