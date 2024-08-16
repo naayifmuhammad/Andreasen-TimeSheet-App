@@ -10,6 +10,8 @@ from reportlab.platypus import Paragraph #type:ignore
 from datetime import timedelta, datetime
 from .models import Timesheet
 from dateutil.relativedelta import relativedelta
+from reportlab.lib.colors import HexColor
+
 
 
 
@@ -85,6 +87,7 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
     
     # Create a PDF object
     buffer = io.BytesIO()
@@ -94,11 +97,33 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
     # Define styles
     styles = getSampleStyleSheet()
 
+
+
+
+    # footer  style
+    blackTH = ParagraphStyle(
+        'blackBoldText',
+        parent=styles['BodyText'],
+        fontName='Helvetica-Bold',  # Bold font
+        fontSize=9,
+        textColor=colors.black,
+        splitLongWords=True,
+    )
+
+
     style_left = ParagraphStyle(
     'LeftAligned',
     parent=styles['Normal'],
     alignment=0,  # Left alignment
     fontSize=12,
+    spaceAfter=6
+)
+    style_left_bold = ParagraphStyle(
+    'LeftAligned',
+    parent=styles['Normal'],
+    alignment=0,  # Left alignment
+    fontSize=9,
+    fontName='Helvetica-Bold',  # Bold font
     spaceAfter=6
 )
 
@@ -129,7 +154,7 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
                 ])
                 total_hours_worked += timesheet.hours_worked
         table_data.append(["","","",""])
-        table_data.append(["","","Total:",total_hours_worked])
+        table_data.append(["","",Paragraph("Total:",blackTH),Paragraph(total_hours_worked,blackTH)])
     
     else:
         
@@ -147,9 +172,9 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
         for project_info in timesheets:
             # Add a header row for the project
             table_data.append([
-                f"{project_info['project_code']}",
-                f"{project_info['project_name']}",
-                f"{project_info['customer_name']}",
+                Paragraph(f"{project_info['project_code']}",blackTH),
+                Paragraph(f"{project_info['project_name']}",blackTH),
+                Paragraph(f"{project_info['customer_name']}",blackTH),
                 '',
             ])
             total_for_this_project  = 0
@@ -164,17 +189,19 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
                 total_for_this_project+=timesheet.hours_worked
 
             # Add a blank row for spacing
-            table_data.append(["","","Total:",total_for_this_project])
+            table_data.append(["","",Paragraph("Total:",blackTH),Paragraph(str(total_for_this_project),blackTH)])
             table_data.append(["","","",""])
-        table_data.append(["", "", "Monthly Total:",total_hours_worked])
+        table_data.append(["", "", Paragraph("Monthly Total:",blackTH),Paragraph(str(total_hours_worked),blackTH)])
 
     # Create table
-    table = Table(table_data,colWidths=[doc.width / 4.0] * len(table_data[0]))
+    colWidths = [doc.width * 0.25,doc.width * 0.2,doc.width * 0.4,doc.width * 0.15]
+    table = Table(table_data,colWidths=colWidths)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor("#088484")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
         ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
@@ -183,7 +210,7 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
     elements.append(table)
 
     elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Total hours worked: {total_hours_worked} hours", styles['Normal']))
+    elements.append(Paragraph(f"Total hours worked: {total_hours_worked} hours", style_left_bold))
     
     # Build PDF
     doc.build(elements)
@@ -213,15 +240,34 @@ def generate_employee_report(employee, weekranges, filename, duration):
     # Define styles
     styles = getSampleStyleSheet()
     styleN = styles["BodyText"]
+    styleN.fontSize = 9
     styleN.alignment = TA_LEFT
     styleBH = styles["Normal"]
     styleBH.alignment = TA_CENTER
+    # Define the header style
+    whiteTH = ParagraphStyle(
+        'WhiteBoldText',
+        parent=styles['BodyText'],
+        fontName='Helvetica-Bold',  # Bold font
+        fontSize=9,
+        textColor=colors.white
+    )
+    # footer  style
+    blackTH = ParagraphStyle(
+        'blackBoldText',
+        parent=styles['BodyText'],
+        fontName='Helvetica-Bold',  # Bold font
+        fontSize=9,
+        textColor=colors.black
+    )
+
 
     style_left = ParagraphStyle(
         'LeftAligned',
         parent=styles['Normal'],
         alignment=0,  # Left alignment
-        fontSize=12,
+        fontName='Helvetica-Bold',  # Bold font
+        fontSize=11,
         spaceAfter=6
     )
 
@@ -229,15 +275,10 @@ def generate_employee_report(employee, weekranges, filename, duration):
     elements.append(Paragraph(f"{employee.get_full_name()}", styles['Title']))
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Team: {employee.team.name}", style_left))
-    elements.append(Paragraph(f"{duration['start']} to {duration['end']}", style_left))
+    elements.append(Paragraph(f"{duration['start'].strftime('%d-%m-%y')} to {duration['end'].strftime('%d-%m-%y')}", style_left))
     elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
-    # Create table data
-    table_data = [
-        [Paragraph('<b>Project</b>', styleBH), Paragraph('<b>Description</b>', styleBH),
-         Paragraph('<b>Mon</b>', styleBH), Paragraph('<b>Tue</b>', styleBH), Paragraph('<b>Wed</b>', styleBH),
-         Paragraph('<b>Thu</b>', styleBH), Paragraph('<b>Fri</b>', styleBH), Paragraph('<b>Total</b>', styleBH)]
-    ]
+    
     
     # Add data from previous and current timesheets
     total_time_worked_in_specific_day = {
@@ -250,9 +291,20 @@ def generate_employee_report(employee, weekranges, filename, duration):
     }
     overAllTotalTimeWorked = 0
     for weekrange in weekranges:
+        weeklytotalworkdone = 0
+        # Create table data
+        table_data = [
+            [
+        'Project', 'Description',
+        Paragraph(f"Mon<br/>{weekrange['dates'][0]}",whiteTH), Paragraph(f"Tue<br/>{weekrange['dates'][1]}",whiteTH), 
+        Paragraph(f"Wed<br/>{weekrange['dates'][2]}",whiteTH), Paragraph(f"Thu<br/>{weekrange['dates'][3]}",whiteTH), 
+        Paragraph(f"Fri<br/>{weekrange['dates'][4]}",whiteTH), 'Total'
+            ]
+        ]
         for timesheet in weekrange['timesheets']:
             total_time_worked_in_specific_day[timesheet.date.strftime('%A')] += timesheet.hours_worked
             overAllTotalTimeWorked += timesheet.hours_worked
+            weeklytotalworkdone += timesheet.hours_worked
             table_data.append([
                 Paragraph(timesheet.project.code, styleN),
                 Paragraph(timesheet.description, styleN),  # Wrapping text in Paragraph
@@ -263,40 +315,42 @@ def generate_employee_report(employee, weekranges, filename, duration):
                 Paragraph(str(0 if timesheet.date.strftime('%A') != 'Friday' else timesheet.hours_worked), styleN),
                 Paragraph(str(timesheet.hours_worked), styleN),
             ])
-    table_data.append([
-        Paragraph('', styleN),
-        Paragraph('', styleN),
-        Paragraph('', styleN),
-        Paragraph('', styleN),
-        Paragraph('', styleN),
-        Paragraph('', styleN),
-        Paragraph('', styleN),
-    ])
-    table_data.append([
-        Paragraph('', styleN),
-        Paragraph('Total hours worked', styleN),
-        Paragraph(str(total_time_worked_in_specific_day["Monday"]), styleN),
-        Paragraph(str(total_time_worked_in_specific_day["Tuesday"]), styleN),
-        Paragraph(str(total_time_worked_in_specific_day["Wednesday"]), styleN),
-        Paragraph(str(total_time_worked_in_specific_day["Thursday"]), styleN),
-        Paragraph(str(total_time_worked_in_specific_day["Friday"]), styleN),
-        
-        Paragraph(str(overAllTotalTimeWorked), styleN),
-    ])
-    # Create table with custom column widths
-    col_widths = [doc.width * 0.15, doc.width * 0.4, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09, doc.width * 0.09]
-    table = Table(table_data, colWidths=col_widths)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
-    ]))
-    
-    elements.append(table)
+       
+        table_data.append([
+            Paragraph('', blackTH),
+            Paragraph('Total hours worked', blackTH),
+            Paragraph(str(total_time_worked_in_specific_day["Monday"]), blackTH),
+            Paragraph(str(total_time_worked_in_specific_day["Tuesday"]), blackTH),
+            Paragraph(str(total_time_worked_in_specific_day["Wednesday"]), blackTH),
+            Paragraph(str(total_time_worked_in_specific_day["Thursday"]), blackTH),
+            Paragraph(str(total_time_worked_in_specific_day["Friday"]), blackTH),
+
+            Paragraph(str(weeklytotalworkdone), blackTH),
+        ])
+        # Create table with custom column widths
+        col_widths = [
+        doc.width * 0.14,  # 10%
+        doc.width * 0.24,  # 22%
+        doc.width * 0.1,  # 8%
+        doc.width * 0.1,  # 8%
+        doc.width * 0.1,  # 8%
+        doc.width * 0.1,  # 8%
+        doc.width * 0.1,  # 8%
+        doc.width * 0.12   # Adjusted to fill remaining width (28%)
+        ]
+        table = Table(table_data, colWidths=col_widths)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#088484')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Set font size to 9 points
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+        ]))
+
+        elements.append(table)
 
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Total: {overAllTotalTimeWorked} hours", style_left))

@@ -6,6 +6,22 @@ def get_current_week_dates():
     current_week_dates = [start_of_week + timedelta(days=i) for i in range(5)]  # Monday to Friday
     return current_week_dates
 
+
+
+#used for report generation (employee)
+def getWeekDatesFromStartDate(date):
+    # Calculate the start of the week (Monday)
+    start_of_week = date - timedelta(days=date.weekday())
+    # Create a list of dates for Monday to Friday
+    #weekdates = [start_of_week + timedelta(days=i) for i in range(5)]
+    weekdates = []
+    for i in range(5):
+        nextday = start_of_week + timedelta(days=i)
+        weekdates.append(nextday.strftime("%d-%b"))
+    return weekdates
+
+
+
 def get_previous_week_dates():
     today = datetime.today()
     # Start of the current week (Monday)
@@ -15,6 +31,7 @@ def get_previous_week_dates():
     # List of dates from Monday to Friday of the previous week
     previous_week_dates = [start_of_previous_week + timedelta(days=i) for i in range(5)]
     return previous_week_dates
+
 
 def get_current_and_previous_workweekranges():
     return {"previous":get_previous_week_dates(), 'current': get_current_week_dates()}

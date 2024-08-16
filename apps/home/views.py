@@ -39,6 +39,7 @@ def index(request):
         'active_projects': active_projects,
         'active_project_count': active_project_count,
         'inactive_project_count' : inactive_project_count,
+        'dates' : get_report_ready_months(),
     }
     if request.user.is_superuser:
         context['teams'] = teams
@@ -109,7 +110,10 @@ def export_project_based_timesheet_summary(request):
     else:
         single_mode = False
         date_range = request.POST.get('date_range')
-        start_date, end_date = date_range.split(' to ')
+        try:
+            start_date, end_date = date_range.split(' to ')
+        except (TypeError, ValueError, AttributeError):
+            return render(request, 'home/index_error.html')
 
         start_date = datetime.strptime(start_date,'%d/%m/%Y').date()
         end_date = datetime.strptime(end_date, '%d/%m/%Y').date()
@@ -223,14 +227,21 @@ def print_employee_report(request, startDate=None, endDate=None):
     if startDate and endDate:
         weekranges = generate_week_ranges_from_given_startdate_till_date(startDate,endDate)
     if request.user.is_superuser or request.user.is_staff: 
-        for weekrange in weekranges:
-            weekrange['timesheets'] = Timesheet.objects.filter(employee=employee, date__range=(weekrange['start'].strftime("%Y-%m-%d"),weekrange['end'].strftime("%Y-%m-%d"))).order_by('date')
+        for weekrange, daterange in zip(weekranges, [getWeekDatesFromStartDate(startDate), getWeekDatesFromStartDate(endDate)]):
+            # Assuming weekrange is a dictionary and you want to update it with timesheets and dates
+            weekrange['timesheets'] = Timesheet.objects.filter(
+                employee=employee, 
+                date__range=(weekrange['start'].strftime("%Y-%m-%d"), weekrange['end'].strftime("%Y-%m-%d"))
+            ).order_by('date')        
+            weekrange['dates'] = daterange  # Assuming daterange is a list of dates returned by getWeekDatesFromStartDate
+
         
         for weekrange in weekranges:
             for timesheet in weekrange['timesheets']:
                 timesheet.day = timesheet.date.strftime("%A")
-        
-    duration = {'start': startDate, 'end' : endDate}
+
+
+    duration = {'start': weekranges[0]['start'], 'end' : weekranges[1]['end']}
     filename = f"{employee.username}-{duration['start']}-to-{duration['end']}-report.pdf"
     return generate_employee_report(employee,weekranges, filename, duration)
 
