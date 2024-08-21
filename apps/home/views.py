@@ -27,24 +27,29 @@ def index(request):
         active_projects = Project.objects.filter(is_active=True).all()
         inactive_projects = Project.objects.filter(is_active=False).all()
         teams = Team.objects.all()
+        active_project_count = active_projects.count()
+        inactive_project_count = inactive_projects.count()
+        context = {
+            'active_projects': active_projects,
+            'active_project_count': active_project_count,
+            'inactive_project_count' : inactive_project_count,
+            'dates' : get_report_ready_months(),
+        }
+        if request.user.is_superuser:
+            context['teams'] = teams
+
+        return render(request, 'home/projects.html', context)
     else:
-        active_projects = Project.objects.filter(team = request.user.team).filter(is_active = True)
-        inactive_projects = Project.objects.filter(team = request.user.team).filter(is_active = False)
-    
-    
+        employee = get_object_or_404(get_user_model(),id=request.user.id)
+        weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+        for timesheet in weekly_timesheets:
+           timesheet.day = timesheet.date.strftime("%A")
+        context = {
+            "weekly_timesheets" : weekly_timesheets,
+            'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
+        }
+        return render(request, 'home/home.html',context)
 
-    active_project_count = active_projects.count()
-    inactive_project_count = inactive_projects.count()
-    context = {
-        'active_projects': active_projects,
-        'active_project_count': active_project_count,
-        'inactive_project_count' : inactive_project_count,
-        'dates' : get_report_ready_months(),
-    }
-    if request.user.is_superuser:
-        context['teams'] = teams
-
-    return render(request, 'home/projects.html', context)
 
 
 @login_required(login_url="/login/")

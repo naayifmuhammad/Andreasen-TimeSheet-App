@@ -14,6 +14,14 @@
             </div> -->
             <ul class="nav">
                 
+                {% if not user.is_superuser %}
+                <li class="{% if 'index' in segment %} active {% endif %} ">
+                    <a href="{% url 'home' %}">
+                        <i class="tim-icons icon-bank"></i>
+                        <p>Home</p>
+                    </a>
+                </li>
+                {% endif %}
                 <li class="{% if 'index' in segment %} active {% endif %} ">
                     <a href="{% url 'projects_tab' %}">
                         <i class="tim-icons icon-notes"></i>
