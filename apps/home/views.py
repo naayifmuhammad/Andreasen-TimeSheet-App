@@ -42,11 +42,14 @@ def index(request):
     else:
         employee = get_object_or_404(get_user_model(),id=request.user.id)
         weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+        weekly_total = 0
         for timesheet in weekly_timesheets:
            timesheet.day = timesheet.date.strftime("%A")
+           weekly_total+=timesheet.hours_worked
         context = {
             "weekly_timesheets" : weekly_timesheets,
             'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
+            'weekly_total' : weekly_total
         }
         return render(request, 'home/home.html',context)
 

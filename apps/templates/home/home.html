@@ -33,6 +33,7 @@
                                     <th width="7%" id="wed">Wed</th>
                                     <th width="7%" id="thu">Thu</th>
                                     <th width="7%" id="fri">Fri</th>
+                                    <th width="7%" id="total">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -47,6 +48,7 @@
                                     <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
                                     <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
                                     <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="total">{{timesheet.hours_worked}}</td>
                                 </tr>
                                 {% empty %}
                                 {% endfor %}
@@ -58,16 +60,17 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
+                                    <th></th>
                                 </tr>
                                 <tr>
-                                    <th colspan="9" id="weekly_total" style="text-align: right;"></th>
+                                    <th colspan="10" id="weekly_total" style="text-align: left;"></th>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
     
                     <script>
-                        let weekly_total = 0
+                        // let weekly_total = 0
                         document.addEventListener('DOMContentLoaded', function () 
                         {
                             // Calculate sums for each day column
@@ -76,7 +79,9 @@
                             countColumnValues(6);
                             countColumnValues(7);
                             countColumnValues(8);
-                            document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + weekly_total + " hours"
+                            countColumnValues(9);
+
+                            document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + {{weekly_total}} + " hours"
                         });
 
                         function countColumnValues(columnIndex) {
@@ -93,7 +98,7 @@
 
                             let finalCell = table.rows[rowCount - 1].cells[columnIndex-3];
                             finalCell.innerText = count + " hours";
-                            weekly_total += count;
+                            // weekly_total += count;
                         }
                     </script>
                 </div>

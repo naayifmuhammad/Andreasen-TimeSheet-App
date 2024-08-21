@@ -31,3 +31,4 @@ apps/static/assets/.temp
 apps/home/migrations/
 apps/authentication/migrations/
 timesheet_export.xlsx
+.env
