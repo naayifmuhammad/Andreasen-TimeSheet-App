@@ -1,5 +1,29 @@
 from datetime import datetime, timedelta
 
+
+
+#latest code; if working disregard the rest
+
+def get_dates_of_week_from_day(day):
+    # Ensure the input is a datetime object
+    if isinstance(day, str):
+        day = datetime.strptime(day, "%Y-%m-%d")  # assuming the string is in 'YYYY-MM-DD' format
+
+    # Find the Monday of the current week (weekday() returns 0 for Monday and 6 for Sunday)
+    start_of_week = day - timedelta(days=day.weekday())
+
+    # Generate the full week (Monday to Sunday)
+    week_dates = [start_of_week + timedelta(days=i) for i in range(7)]
+    
+    # Return as a list of formatted date strings (optional)
+    return [date.strftime("%Y-%m-%d") for date in week_dates]
+
+
+
+
+#latest code; if working disregard the rest
+
+
 def get_current_week_dates():
     today = datetime.today()
     start_of_week = today - timedelta(days=today.weekday())

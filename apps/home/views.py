@@ -1,3 +1,4 @@
+import json
 from django import template
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -555,6 +556,36 @@ def add_timesheet_entry(request, project_id):
 
 
 
+@login_required(login_url="/login/")
+def create_timesheet_entry(request):
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        project_id = data.get('project_id')
+        project = get_object_or_404(Project, pk=project_id)
+        
+        form = TimesheetForm(data={
+            'description': data.get('description'),
+            'hours_worked': data.get('hours_worked')
+        })
+        
+        if form.is_valid():
+            # Create the timesheet instance without saving to the database yet
+            timesheet = form.save(commit=False)
+            # Set the additional fields manually
+            timesheet.date = data.get('date')
+            timesheet.employee = request.user
+            timesheet.project = project
+            timesheet.save()  # Now save to the database
+
+            messages.success(request, 'Timesheet entry created successfully.')  
+            return redirect('home')
+        else:
+            messages.error(request, 'Error submitting timesheet. Please correct the form errors.')  
+    else:
+        form = TimesheetForm()
+
+    return render(request, 'home')
 
 
 #account related updates 

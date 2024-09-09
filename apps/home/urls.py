@@ -28,6 +28,7 @@ urlpatterns = [
     path('get_week_dates/<str:week_type>/', views.get_week_dates, name='get_week_dates'),
     path('project_details/<int:project_id>/', views.project_details, name='project_details'),
     path('add_timesheet_entry/<int:project_id>/', views.add_timesheet_entry, name='add_timesheet_entry'),
+    path('create_timesheet_entry/', views.create_timesheet_entry, name='create_timesheet_entry'),
     path('bi-weekly/', views.view_weekly_timesheet, name='view_weekly_timesheet'),
     path('export-timesheet/<str:start_date>/<str:end_date>/', views.export_timesheet, name='export_timesheet'),
     #path for the button to export the project based timesheet
