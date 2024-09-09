@@ -63,11 +63,17 @@ def get_last_week_end() -> datetime:
 
 
 def get_current_week_end() -> datetime:
-    today = datetime.today()
-    # Calculate the number of days to add to get to the next Friday
-    days_until_friday = 4 - today.weekday()  # 4 corresponds to Friday
-    current_week_end = today + timedelta(days=days_until_friday)
-    return current_week_end
+     # Get today's date
+    today = datetime.now()
+    
+    # Calculate the number of days to add to get to the last day of the week (Sunday)
+    days_until_sunday = (6 - today.weekday())  # weekday() returns 0 for Monday, 1 for Tuesday, ..., 6 for Sunday
+    
+    # Calculate the date of the last day of the current week
+    last_day_of_week = today + timedelta(days=days_until_sunday)
+    
+    return last_day_of_week.date()
+
 
 def getTimePeriods(duration=None):
     if not duration:

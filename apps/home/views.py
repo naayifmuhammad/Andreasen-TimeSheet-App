@@ -42,6 +42,7 @@ def index(request):
     else:
         employee = get_object_or_404(get_user_model(),id=request.user.id)
         weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+        projects = Project.objects.filter(team=employee.team)
         weekly_total = 0
         for timesheet in weekly_timesheets:
            timesheet.day = timesheet.date.strftime("%A")
@@ -49,7 +50,8 @@ def index(request):
         context = {
             "weekly_timesheets" : weekly_timesheets,
             'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
-            'weekly_total' : weekly_total
+            'weekly_total' : weekly_total,
+            'projects': projects,
         }
         return render(request, 'home/home.html',context)
 
@@ -546,7 +548,6 @@ def add_timesheet_entry(request, project_id):
             return redirect('project_details',project_id = project.id)  # Redirect to 'timesheet' view after saving timesheet
         else:
             messages.error(request, 'Error submitting timesheet. Please correct the form errors.')  # Error message
-            print(form.errors)  # Print form errors to console for debugging
     else:
         form = TimesheetForm()
 
