@@ -13,10 +13,10 @@
             <div class="card">
                 <div class="card-body">
                     <div class="card-user-data row d-flex justify-space-between">
-                        <div class="card-title col-6 text-left">
+                        <div class="prev-current card-title col-6 text-left">
                             <h4>Name : {{user.get_full_name }}</h2>
-                        </div>
-                        <div class="card-title col-6 text-right">
+                            </div>
+                            <div class="card-title col-6 text-right">
                             <h4>Week ending : {{ week_ending }}</h2>
                         </div>
                     </div>
@@ -25,15 +25,17 @@
                             <thead class="text-primary">
                                 <tr>
                                     <th width="8%">Project #</th>
-                                    <th width="10%">Name</th>
-                                    <th width="10%">Client</th>
-                                    <th width="20%">Description of work</th>
-                                    <th width="7%" id="mon">Mon</th>
-                                    <th width="7%" id="tue">Tue</th>
-                                    <th width="7%" id="wed">Wed</th>
-                                    <th width="7%" id="thu">Thu</th>
-                                    <th width="7%" id="fri">Fri</th>
-                                    <th width="7%" id="total">Total</th>
+                                    <th >Name</th>
+                                    <th >Client</th>
+                                    <th >Description of work</th>
+                                    <th width="6%" id="mon">Mon</th>
+                                    <th width="6%" id="tue">Tue</th>
+                                    <th width="6%" id="wed">Wed</th>
+                                    <th width="6%" id="thu">Thu</th>
+                                    <th width="6%" id="fri">Fri</th>
+                                    <th width="6%" id="sat">Sat</th>
+                                    <th width="6%" id="sun">Sun</th>
+                                    <th id="total">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -48,10 +50,52 @@
                                     <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
                                     <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
                                     <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="sat">{% if timesheet.day == "Saturday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
+                                    <td name="sun">{% if timesheet.day == "Sunday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
                                     <td name="total">{{timesheet.hours_worked}}</td>
                                 </tr>
                                 {% empty %}
                                 {% endfor %}
+
+                                <tr>
+                                    <td name="id">
+                                        <select class="form-control option-background" name="project-code-dropdown" id="project-code-dropdown">
+                                            <option value="" selected>Select Project</option>
+                                            {% for project in projects %}
+                                            <option value="{{ project.id }}" data-name="{{ project.name }}" data-customer="{{ project.customer }}"
+                                                data-description="{{ project.description }}">
+                                                {{project.code}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td name="p-name"></td>
+                                    <td name="p-customer"></td>
+                                    <td  class="" name="p-description">
+                                        <input class="form-control timesheet-description" type="text" name="timesheet-description" id="timesheet-description" placeholder="Description of work*">
+                                    </td>
+                                    <td  class="" name="Monday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.0}}" name="Monday" step="1" placeholder="">
+                                    </td>
+                                    <td name="Tuesday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.1}}" name="Tuesday" step="1" placeholder="">
+                                    </td>
+                                    <td  class="" name="Wednesday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.2}}" name="Wednesday" step="1" placeholder="">
+                                    </td>
+                                    <td  class="" name="Thursday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.3}}" name="Thursday" step="1" placeholder="">
+                                    </td>
+                                    <td  class="" name="Friday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.4}}" name="Friday" step="1" placeholder="">
+                                    </td>
+                                    <td  class="" name="Saturday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.5}}" name="Saturday" step="1" placeholder="">
+                                    </td>
+                                    <td  class="" name="Sunday">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.6}}" name="Sunday" step="1" placeholder="">
+                                    </td>
+                                    <td><a href ='' id='btn-confirm' class="btn-primary">Confirm</a></td>
+                                </tr>
 
                                 <tr id="calculated-row">
                                     <th colspan="4">Total</th>
@@ -61,16 +105,145 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                                 <tr>
-                                    <th colspan="10" id="weekly_total" style="text-align: left;"></th>
+                                    <th colspan="12" id="weekly_total" style="text-align: left;"></th>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
     
                     <script>
-                        // let weekly_total = 0
+
+                        //send data to server path
+                        function sendDataToServer(project_id, description, hours_worked, work_date) {
+                        // Create the data object to send in the POST request
+                        let data = {
+                            project_id: project_id,
+                            description: description,
+                            hours_worked: hours_worked,
+                            date: work_date,
+                        };
+                    
+                        fetch('/create_timesheet_entry/', {  // Adjust the URL as per your routing
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCSRFToken() 
+                            },
+                            body: JSON.stringify(data)
+                        })
+                        .then(response => response.json())  // Assuming the backend sends a JSON response
+                        .then(data => {
+                            console.log('Success:', data); 
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error); 
+                        });
+                    }
+
+                        // Function to get CSRF token from the cookie (Django uses CSRF protection by default)
+                        function getCSRFToken() {
+                            let csrfToken = null;
+                            const cookies = document.cookie.split(';');
+                            cookies.forEach(cookie => {
+                                if (cookie.trim().startsWith('csrftoken=')) {
+                                    csrfToken = cookie.trim().substring('csrftoken='.length);
+                                }
+                            });
+                            return csrfToken;
+                        }
+
+                        function fetchTimeWorked(){
+                            var inputFields = document.querySelectorAll('.day-input');
+                            for(var field of inputFields){
+                                    if(!field.disabled && field.value!=""){
+                                        return field;
+                                    }
+                                }
+                            return null;
+                        }
+
+                        function confirmNewTimesheet(){
+                            var pCodeSelect = document.getElementById('project-code-dropdown');
+                            var selectedIndex = pCodeSelect.selectedIndex;
+                            var project_id = pCodeSelect.options[selectedIndex].value;
+
+                            //get the project description
+                            var description = document.getElementById('timesheet-description').value;
+                            
+                            var hours_worked_field = fetchTimeWorked();
+                            var hours_worked = hours_worked_field.value;
+                            var date = hours_worked_field.dataset.workdate;                            
+                            sendDataToServer(project_id,description,hours_worked,date);
+                        }
+
+
+
+                        document.getElementById('btn-confirm').addEventListener("click", confirmNewTimesheet)
+
+
+                        function disableOtherInputs(currentInput) {
+                        // Get all input fields with class 'day-input'
+                        let dayInputs = document.querySelectorAll('.day-input');
+
+                        dayInputs.forEach(function(input) {
+                            // Disable all inputs except the currently selected one
+                            if (input !== currentInput) {
+                                input.disabled = true;
+                            }
+                        });
+                        }
+
+                        // Function to re-enable all inputs (e.g., when the form is reset or user clicks outside)
+                        function enableAllInputs() {
+                            let dayInputs = document.querySelectorAll('.day-input');
+                            var blank = true
+                            dayInputs.forEach(function(input){
+                                if(input.value !== ''){
+                                    blank = false
+                                } 
+                            })
+                            if(blank){
+                                dayInputs.forEach(function(input) {
+                                    input.disabled = false;
+                                });
+                            }
+                        }
+
+
+                        //to look for project dropdown
+                        var p_code_selector = document.getElementById('project-code-dropdown');
+                        p_code_selector.addEventListener('change', function(){
+                        
+                            let selectedOption = this.options[this.selectedIndex];
+
+                            // Retrieve data attributes for the selected option
+                            let projectName = selectedOption.getAttribute('data-name');
+                            let projectClient = selectedOption.getAttribute('data-customer');
+
+                            // Update the corresponding <td> elements
+                            document.querySelector('td[name="p-name"]').textContent = projectName || '';
+                            document.querySelector('td[name="p-customer"]').textContent = projectClient || '';
+                        });
+
+
+                        // Add event listeners to each input field
+                        document.querySelectorAll('.day-input').forEach(function(input) {
+                            input.addEventListener('focus', function() {
+                                disableOtherInputs(this);
+                            });
+                        });
+
+                        document.addEventListener('click', function(event) {
+                        // If the click is outside of the input fields, re-enable all inputs
+                        if (!event.target.classList.contains('day-input')) {
+                            enableAllInputs();
+                        }
+                    });
+
                         document.addEventListener('DOMContentLoaded', function () 
                         {
                             // Calculate sums for each day column
@@ -80,6 +253,8 @@
                             countColumnValues(7);
                             countColumnValues(8);
                             countColumnValues(9);
+                            countColumnValues(10);
+                            countColumnValues(11);
 
                             document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + {{weekly_total}} + " hours"
                         });

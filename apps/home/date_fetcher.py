@@ -1,5 +1,33 @@
 from datetime import datetime, timedelta
 
+
+
+#latest code; if working disregard the rest
+
+def get_dates_of_week_from_day(day, stringFormat = True):
+    # Ensure the input is a datetime object
+    if isinstance(day, str):
+        day = datetime.strptime(day, "%Y-%m-%d")  # assuming the string is in 'YYYY-MM-DD' format
+
+    # Find the Monday of the current week (weekday() returns 0 for Monday and 6 for Sunday)
+    start_of_week = day - timedelta(days=day.weekday())
+
+    # Generate the full week (Monday to Sunday)
+    if stringFormat:
+        week_dates = [start_of_week + timedelta(days=i) for i in range(7)]
+    else:
+        week_dates = [start_of_week + timedelta(days=i) for i in range(7)]
+        return week_dates
+    
+    # Return as a list of formatted date strings (optional)
+    return [date.strftime("%Y-%m-%d") for date in week_dates]
+
+
+
+
+#latest code; if working disregard the rest
+
+
 def get_current_week_dates():
     today = datetime.today()
     start_of_week = today - timedelta(days=today.weekday())
@@ -34,7 +62,9 @@ def get_previous_week_dates():
 
 
 def get_current_and_previous_workweekranges():
-    return {"previous":get_previous_week_dates(), 'current': get_current_week_dates()}
+    previous_week_dates = get_dates_of_week_from_day(datetime.today() - timedelta(days=7),False)
+    current_week_dates = get_dates_of_week_from_day(datetime.today(),False)
+    return {"previous" : previous_week_dates, "current" : current_week_dates}
 
 def fetchWeekDropdown():
     week_choices = [(date.strftime('%Y-%m-%d'), date.strftime('%A')) for date in get_current_week_dates()]
@@ -58,16 +88,22 @@ def get_current_week_start()-> datetime:
 
 def get_last_week_end() -> datetime:
     last_monday = get_last_week_start()
-    last_week_friday = last_monday + timedelta(days=6)
-    return last_week_friday
+    sunday = last_monday + timedelta(days=6)
+    return sunday
 
 
 def get_current_week_end() -> datetime:
-    today = datetime.today()
-    # Calculate the number of days to add to get to the next Friday
-    days_until_friday = 4 - today.weekday()  # 4 corresponds to Friday
-    current_week_end = today + timedelta(days=days_until_friday)
-    return current_week_end
+     # Get today's date
+    today = datetime.now()
+    
+    # Calculate the number of days to add to get to the last day of the week (Sunday)
+    days_until_sunday = (6 - today.weekday())  # weekday() returns 0 for Monday, 1 for Tuesday, ..., 6 for Sunday
+    
+    # Calculate the date of the last day of the current week
+    last_day_of_week = today + timedelta(days=days_until_sunday)
+    
+    return last_day_of_week.date()
+
 
 def getTimePeriods(duration=None):
     if not duration:

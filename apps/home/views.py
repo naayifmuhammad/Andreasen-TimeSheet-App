@@ -1,3 +1,4 @@
+import json
 from django import template
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -42,6 +43,7 @@ def index(request):
     else:
         employee = get_object_or_404(get_user_model(),id=request.user.id)
         weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+        projects = Project.objects.filter(team=employee.team)
         weekly_total = 0
         for timesheet in weekly_timesheets:
            timesheet.day = timesheet.date.strftime("%A")
@@ -49,7 +51,9 @@ def index(request):
         context = {
             "weekly_timesheets" : weekly_timesheets,
             'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
-            'weekly_total' : weekly_total
+            'weekly_total' : weekly_total,
+            'projects': projects,
+            'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
         }
         return render(request, 'home/home.html',context)
 
@@ -231,6 +235,7 @@ def print_employee_report(request, startDate=None, endDate=None):
     employee = get_object_or_404(employee_model, id=employee_id)
     startDate = datetime.strptime(request.GET.get('start_date'),'%d/%m/%Y').date()
     endDate = datetime.strptime(request.GET.get('end_date'), '%d/%m/%Y').date()
+
     #get biweekly ranges from given start and end dates
     if startDate and endDate:
         weekranges = generate_week_ranges_from_given_startdate_till_date(startDate,endDate)
@@ -247,9 +252,10 @@ def print_employee_report(request, startDate=None, endDate=None):
         for weekrange in weekranges:
             for timesheet in weekrange['timesheets']:
                 timesheet.day = timesheet.date.strftime("%A")
-
-
-    duration = {'start': weekranges[0]['start'], 'end' : weekranges[1]['end']}
+    
+    # duration = {'start': weekranges[0]['start'], 'end' : weekranges[1]['end']}
+    duration = {'start': startDate, 'end' : endDate}
+    print("Issue with weekranes??")
     filename = f"{employee.username}-{duration['start']}-to-{duration['end']}-report.pdf"
     return generate_employee_report(employee,weekranges, filename, duration)
 
@@ -488,6 +494,7 @@ def timesheet_entry(request, project_id):
         'c_end' : prev_curre_week_dates['current'][-1].strftime("%d/%m/%Y")
     }
 
+
     context = {
         'form': form,
         'project' : project,
@@ -497,17 +504,20 @@ def timesheet_entry(request, project_id):
 
     return render(request, 'home/new-timesheet-entry.html', context)
 
-
 @login_required(login_url="/login/")
 def get_week_dates(request, week_type):
     if week_type == 'current':
-        week_dates = get_current_week_dates()
+        week_dates = get_dates_of_week_from_day(datetime.today(),False)
+        print("week dates = ", week_dates)
     elif week_type == 'previous':
-        week_dates = get_previous_week_dates()
+        last_week_date = datetime.today() - timedelta(days=7)
+        week_dates = get_dates_of_week_from_day(last_week_date,False)
+        print("week dates = ", week_dates)
     else:
         week_dates = []
     week_choices = [(date.strftime('%Y-%m-%d'), date.strftime('%A')) for date in week_dates]
     return JsonResponse({'week_choices': week_choices})
+
 
 @login_required(login_url="/login/")
 def view_profile(request):
@@ -546,7 +556,6 @@ def add_timesheet_entry(request, project_id):
             return redirect('project_details',project_id = project.id)  # Redirect to 'timesheet' view after saving timesheet
         else:
             messages.error(request, 'Error submitting timesheet. Please correct the form errors.')  # Error message
-            print(form.errors)  # Print form errors to console for debugging
     else:
         form = TimesheetForm()
 
@@ -554,6 +563,37 @@ def add_timesheet_entry(request, project_id):
 
 
 
+@login_required(login_url="/login/")
+def create_timesheet_entry(request):
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        print("data is\n", data)
+        project_id = data.get('project_id')
+        project = get_object_or_404(Project, pk=project_id)
+        
+        form = TimesheetForm(data={
+            'description': data.get('description'),
+            'hours_worked': data.get('hours_worked')
+        })
+        if form.is_valid():
+            print("getting the date")
+            timesheet = form.save(commit=False)
+            # Set the additional fields manually
+            timesheet.date = data.get('date')
+            print("got the date",data.get('date'))
+            timesheet.employee = request.user
+            timesheet.project = project
+            timesheet.save()  # Now save to the database
+
+            messages.success(request, 'Timesheet entry created successfully.')  
+            return redirect('home')
+        else:
+            messages.error(request, 'Error submitting timesheet. Please correct the form errors.')  
+    else:
+        form = TimesheetForm()
+
+    return render(request, 'home')
 
 
 #account related updates 
