@@ -16,8 +16,7 @@
                         <div class="prev-current card-title col-6 text-left">
                             <h4>Name : {{user.get_full_name }}</h2>
                             </div>
-                            <div class="btn-container card-title col-6 text-right d-flex justify-content-end">
-                            <a id="changeWeek-btn" class="mx-2" onclick="changeWeek()">Go to Previous week</a>
+                            <div class="card-title col-6 text-right">
                             <h4>Week ending : {{ week_ending }}</h2>
                         </div>
                     </div>
@@ -75,25 +74,25 @@
                                         <input class="form-control timesheet-description" type="text" name="timesheet-description" id="timesheet-description" placeholder="Description of work*">
                                     </td>
                                     <td  class="" name="Monday">
-                                        <input class="day-input form-control" type="number" name="Monday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.0}}" name="Monday" step="1" placeholder="">
                                     </td>
                                     <td name="Tuesday">
-                                        <input class="day-input form-control" type="number" name="Tuesday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.1}}" name="Tuesday" step="1" placeholder="">
                                     </td>
                                     <td  class="" name="Wednesday">
-                                        <input class="day-input form-control" type="number" name="Wednesday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.2}}" name="Wednesday" step="1" placeholder="">
                                     </td>
                                     <td  class="" name="Thursday">
-                                        <input class="day-input form-control" type="number" name="Thursday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.3}}" name="Thursday" step="1" placeholder="">
                                     </td>
                                     <td  class="" name="Friday">
-                                        <input class="day-input form-control" type="number" name="Friday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.4}}" name="Friday" step="1" placeholder="">
                                     </td>
                                     <td  class="" name="Saturday">
-                                        <input class="day-input form-control" type="number" name="Saturday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.5}}" name="Saturday" step="1" placeholder="">
                                     </td>
                                     <td  class="" name="Sunday">
-                                        <input class="day-input form-control" type="number" name="Sunday" step="1" placeholder="">
+                                        <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.6}}" name="Sunday" step="1" placeholder="">
                                     </td>
                                     <td><a href ='' id='btn-confirm' class="btn-primary">Confirm</a></td>
                                 </tr>
@@ -119,13 +118,13 @@
                     <script>
 
                         //send data to server path
-                        function sendDataToServer(project_id, description, hours_worked, date) {
+                        function sendDataToServer(project_id, description, hours_worked, work_date) {
                         // Create the data object to send in the POST request
                         let data = {
                             project_id: project_id,
                             description: description,
                             hours_worked: hours_worked,
-                            date: date
+                            date: work_date,
                         };
                     
                         fetch('/create_timesheet_entry/', {  // Adjust the URL as per your routing
@@ -157,24 +156,11 @@
                             return csrfToken;
                         }
 
-
-
-
-                        function changeWeek(){
-                            var btn = document.getElementById('changeWeek-btn')
-                            if(btn.innerHTML === 'Go to Previous week'){
-                                btn.innerHTML = 'Go to Current week';
-                            }
-                            else{
-                                btn.innerHTML = 'Go to Previous week';
-                            }
-                        }
-
                         function fetchTimeWorked(){
                             var inputFields = document.querySelectorAll('.day-input');
                             for(var field of inputFields){
                                     if(!field.disabled && field.value!=""){
-                                        return field.value;
+                                        return field;
                                     }
                                 }
                             return null;
@@ -188,8 +174,9 @@
                             //get the project description
                             var description = document.getElementById('timesheet-description').value;
                             
-                            var hours_worked = fetchTimeWorked();
-                            date= "2024-09-09";
+                            var hours_worked_field = fetchTimeWorked();
+                            var hours_worked = hours_worked_field.value;
+                            var date = hours_worked_field.dataset.workdate;                            
                             sendDataToServer(project_id,description,hours_worked,date);
                         }
 

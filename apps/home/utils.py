@@ -28,7 +28,7 @@ def generate_week_ranges_from_given_startdate_till_date(start_date=None, end_dat
     week_ranges = []
     start_of_week = get_monday_of_week(start_date)
     while start_of_week <= end_date:
-        end_of_week = start_of_week + timedelta(days=4)
+        end_of_week = start_of_week + timedelta(days=6)
         week_ranges.append({"start": start_of_week , "end" : end_of_week})
         start_of_week += timedelta(days=7)
     return week_ranges
