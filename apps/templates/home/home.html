@@ -70,8 +70,9 @@
                                     </td>
                                     <td name="p-name"></td>
                                     <td name="p-customer"></td>
-                                    <td  class="" name="p-description">
+                                    <td class="" name="p-description">
                                         <input class="form-control timesheet-description" type="text" name="timesheet-description" id="timesheet-description" placeholder="Description of work*">
+                                        <ul id="suggestions-list" style="display: none;"></ul> <!-- Suggestions will be shown here -->
                                     </td>
                                     <td  class="" name="Monday">
                                         <input class="day-input form-control" type="number" data-workdate="{{dates_for_work_days.0}}" name="Monday" step="1" placeholder="">
@@ -116,6 +117,46 @@
                     </div>
     
                     <script>
+
+                        $(document).ready(function () {
+                            $('#timesheet-description').on('input', function () {
+                                var query = $(this).val();
+
+                                if (query.length > 2) {  // Fetch suggestions only when input length is > 2
+                                    $.ajax({
+                                        url: "{% url 'description_suggestions' %}",
+                                        data: {
+                                            'q': query
+                                        },
+                                        dataType: 'json',
+                                        success: function (data) {
+                                            var suggestionsList = $('#suggestions-list');
+                                            suggestionsList.empty(); // Clear previous suggestions
+                                            suggestionsList.show(); // Display suggestions list
+
+                                            if (data.length > 0) {
+                                                data.forEach(function (suggestion) {
+                                                    suggestionsList.append('<li class="suggestion-item">' + suggestion + '</li>');
+                                                });
+                                            } else {
+                                                suggestionsList.hide(); // Hide if no suggestions
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    $('#suggestions-list').hide(); // Hide suggestions list if input is too short
+                                }
+                            });
+
+                            // Listen for suggestion item click and set it as the input value
+                            $(document).on('click', '.suggestion-item', function () {
+                                var suggestion = $(this).text();
+                                $('#timesheet-description').val(suggestion);
+                                $('#suggestions-list').hide(); // Hide suggestions after selection
+                            });
+                        });
+
+
 
                         //send data to server path
                         function sendDataToServer(project_id, description, hours_worked, work_date) {

@@ -9,6 +9,7 @@ from .forms import TimesheetForm, ProjectForm, EditProjectForm
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Project, Timesheet, Team, Customer
 from django.db.models import Sum
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from .forms import EmployeeCreationForm
 from django.contrib.auth import get_user_model
@@ -43,7 +44,21 @@ def index(request):
     else:
         employee = get_object_or_404(get_user_model(),id=request.user.id)
         weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+        distinct_descriptions = Timesheet.objects.filter(
+        employee=employee,
+        date__range=(
+        get_current_week_start().strftime("%Y-%m-%d"),
+        get_current_week_end().strftime("%Y-%m-%d")
+        )
+        ).values_list('description', flat=True).distinct()
+        print('distinct values are:\n', distinct_descriptions)
         projects = Project.objects.filter(team=employee.team)
+
+        description_based_timesheets = {}
+        for description in distinct_descriptions:
+            description_based_timesheets[description] = Timesheet.objects.filter(employee=employee,description=description,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+
+        print("description based timesheets\n",description_based_timesheets)
         weekly_total = 0
         for timesheet in weekly_timesheets:
            timesheet.day = timesheet.date.strftime("%A")
@@ -55,6 +70,20 @@ def index(request):
             'projects': projects,
             'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
         }
+        # employee = get_object_or_404(get_user_model(),id=request.user.id)
+        # weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
+        # projects = Project.objects.filter(team=employee.team)
+        # weekly_total = 0
+        # for timesheet in weekly_timesheets:
+        #    timesheet.day = timesheet.date.strftime("%A")
+        #    weekly_total+=timesheet.hours_worked
+        # context = {
+        #     "weekly_timesheets" : weekly_timesheets,
+        #     'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
+        #     'weekly_total' : weekly_total,
+        #     'projects': projects,
+        #     'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
+        # }
         return render(request, 'home/home.html',context)
 
 
@@ -255,7 +284,6 @@ def print_employee_report(request, startDate=None, endDate=None):
     
     # duration = {'start': weekranges[0]['start'], 'end' : weekranges[1]['end']}
     duration = {'start': startDate, 'end' : endDate}
-    print("Issue with weekranes??")
     filename = f"{employee.username}-{duration['start']}-to-{duration['end']}-report.pdf"
     return generate_employee_report(employee,weekranges, filename, duration)
 
@@ -270,8 +298,12 @@ def timesheet(request):
 
 
 @login_required(login_url="/login/")
-
-
+@csrf_exempt
+def get_description_suggestions(request):
+    if request.method == 'GET':
+        query = request.GET.get('q', '')  # 'q' is the input text from the user
+        suggestions = Timesheet.objects.filter(description__icontains=query).values_list('description', flat=True).distinct()[:10]
+        return JsonResponse(list(suggestions), safe=False)
 
 #we don't need csv anymore
 def export_timesheet(request, start_date, end_date):
@@ -505,6 +537,15 @@ def timesheet_entry(request, project_id):
     return render(request, 'home/new-timesheet-entry.html', context)
 
 @login_required(login_url="/login/")
+@csrf_exempt
+def get_description_suggestions(request):
+    if request.method == 'GET':
+        query = request.GET.get('q', '')  # 'q' is the input text from the user
+        suggestions = Timesheet.objects.filter(description__icontains=query).values_list('description', flat=True).distinct()[:10]
+        return JsonResponse(list(suggestions), safe=False)
+
+
+@login_required(login_url="/login/")
 def get_week_dates(request, week_type):
     if week_type == 'current':
         week_dates = get_dates_of_week_from_day(datetime.today(),False)
@@ -572,6 +613,8 @@ def create_timesheet_entry(request):
         project_id = data.get('project_id')
         project = get_object_or_404(Project, pk=project_id)
         
+        
+
         form = TimesheetForm(data={
             'description': data.get('description'),
             'hours_worked': data.get('hours_worked')
