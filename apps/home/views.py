@@ -98,7 +98,7 @@ def index(request):
             for timesheet_entry in full_timesheets_for_that_project_with_description:
                 day_of_week = timesheet_entry.date.strftime("%A")
                 description_based_timesheets[project_code]["description"][description][day_of_week] =  timesheet_entry.hours_worked if timesheet_entry else 0 
-            total_hours_worked += timesheet_entry.hours_worked if timesheet_entry else 0
+                total_hours_worked += timesheet_entry.hours_worked if timesheet_entry else 0
                     
         
 
@@ -109,7 +109,6 @@ def index(request):
             'projects': projects,
             'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
         }
-        print(description_based_timesheets)
         return render(request, 'home/home.html',context)
 
 

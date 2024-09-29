@@ -231,6 +231,11 @@
                             var selectedIndex = pCodeSelect.selectedIndex;
                             var project_id = pCodeSelect.options[selectedIndex].value;
 
+                            if(project_id==""){
+                                alert("Please select a project");
+                                return
+                            }
+
                             //get the project description
                             var description = document.getElementById('timesheet-description').value;
                             
