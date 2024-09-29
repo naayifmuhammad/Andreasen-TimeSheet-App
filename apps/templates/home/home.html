@@ -25,9 +25,9 @@
                             <thead class="text-primary">
                                 <tr>
                                     <th width="8%">Project #</th>
-                                    <th >Name</th>
-                                    <th >Client</th>
-                                    <th >Description of work</th>
+                                    <th>Name</th>
+                                    <th>Client</th>
+                                    <th>Description of work</th>
                                     <th width="6%" id="mon">Mon</th>
                                     <th width="6%" id="tue">Tue</th>
                                     <th width="6%" id="wed">Wed</th>
@@ -37,27 +37,46 @@
                                     <th width="6%" id="sun">Sun</th>
                                     <th id="total">Total</th>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {% for timesheet in weekly_timesheets %}
-                                <tr>
-                                    <td>{{ timesheet.project.code }}</td>
-                                    <td>{{ timesheet.project.name }}</td>
-                                    <td>{{ timesheet.project.customer }}</td>
-                                    <td>{{ timesheet.description }}</td>
-                                    <td name="mon">{% if timesheet.day == "Monday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="tue">{% if timesheet.day == "Tuesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
-                                    <td name="wed">{% if timesheet.day == "Wednesday" %} {{timesheet.hours_worked}} {% else %} 0.00{% endif %}</td>
-                                    <td name="thu">{% if timesheet.day == "Thursday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="fri">{% if timesheet.day == "Friday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="sat">{% if timesheet.day == "Saturday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="sun">{% if timesheet.day == "Sunday" %}{{timesheet.hours_worked}} {% else %} 0.00 {% endif %}</td>
-                                    <td name="total">{{timesheet.hours_worked}}</td>
-                                </tr>
-                                {% empty %}
-                                {% endfor %}
-
-                                <tr>
+                                </thead>
+                                <tbody>
+                                    {% for project, details in desc_timesheets.items %}
+                                    {% for description, days in details.description.items %}
+                                    <tr>
+                                        <!-- Project code -->
+                                        <td>{{ project }}</td>
+                                
+                                        <!-- Project name -->
+                                        <td>{{ details.project.name }}</td>
+                                
+                                        <!-- Project customer -->
+                                        <td>{{ details.project.customer }}</td>
+                                
+                                        <!-- Description of the task -->
+                                        <td>{{ description }}</td>
+                                
+                                        <!-- Hours worked for each day of the week -->
+                                        <td name="mon">{{ days.Monday }}</td>
+                                        <td name="tue">{{ days.Tuesday}}</td>
+                                        <td name="wed">{{ days.Wednesday }}</td>
+                                        <td name="thu">{{ days.Thursday }}</td>
+                                        <td name="fri">{{ days.Friday }}</td>
+                                        <td name="sat">{{ days.Saturday }}</td>
+                                        <td name="sun">{{ days.Sunday }}</td>
+                                
+                                        <td class="fw-bold" name="total">   
+                                        </td>
+                                        
+                                        
+                                    </tr>
+                                    {% endfor %}
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="12">No timesheets available</td>
+                                    </tr>
+                                    {% endfor %}
+                                
+                                
+                                    <tr>
                                     <td name="id">
                                         <select class="form-control option-background" name="project-code-dropdown" id="project-code-dropdown">
                                             <option value="" selected>Select Project</option>
@@ -285,6 +304,38 @@
                         }
                     });
 
+                    function calculateTotalHours() {
+        // Select all table rows
+        const rows = document.querySelectorAll("table tr");
+
+        rows.forEach(row => {
+            // Initialize total to 0
+            let total = 0;
+
+            // Days of the week
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+            // Loop through each day and calculate the total
+            days.forEach(day => {
+                // Select the cell for the current day
+                const dayCell = row.querySelector(`td[name="${day}"]`);
+
+                // Check if the cell exists and has a valid content
+                if (dayCell) {
+                    const hours = parseFloat(dayCell.textContent) || 0;  // Convert to number or default to 0
+                    total += hours;  // Add to total
+                }
+            });
+
+            // Set the total in the respective total field
+            const totalField = row.querySelector('td[name="total"]');
+            if (totalField) {
+                totalField.textContent = total.toFixed(2);  // Ensure 2 decimal places if needed
+            }
+        });
+    }
+
+
                         document.addEventListener('DOMContentLoaded', function () 
                         {
                             // Calculate sums for each day column
@@ -296,6 +347,8 @@
                             countColumnValues(9);
                             countColumnValues(10);
                             countColumnValues(11);
+                            calculateTotalHours();
+                            
 
                             document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + {{weekly_total}} + " hours"
                         });

@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from datetime import datetime
 from django.http import HttpResponse
 import csv
+from django.db.models import Q
 from .utils import generate_project_report, generate_employee_report, get_report_ready_months, getBiWeeklyRanges, generate_week_ranges_from_given_startdate_till_date, generate_employee_report
 
 
@@ -43,47 +44,67 @@ def index(request):
         return render(request, 'home/projects.html', context)
     else:
         employee = get_object_or_404(get_user_model(),id=request.user.id)
-        weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
-        distinct_descriptions = Timesheet.objects.filter(
-        employee=employee,
-        date__range=(
-        get_current_week_start().strftime("%Y-%m-%d"),
-        get_current_week_end().strftime("%Y-%m-%d")
-        )
-        ).values_list('description', flat=True).distinct()
-        print('distinct values are:\n', distinct_descriptions)
         projects = Project.objects.filter(team=employee.team)
+        
+        employee = get_object_or_404(get_user_model(), id=request.user.id)
 
+        # Get distinct project and description pairs for the current week
+        distinct_descriptions = Timesheet.objects.filter(
+            employee=employee,
+            date__range=(
+                get_current_week_start().strftime("%Y-%m-%d"),
+                get_current_week_end().strftime("%Y-%m-%d")
+            )
+        ).values('project__code', 'description').distinct()
+            
+        # Initialize dictionary for description-based timesheets
         description_based_timesheets = {}
-        for description in distinct_descriptions:
-            description_based_timesheets[description] = Timesheet.objects.filter(employee=employee,description=description,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
 
-        print("description based timesheets\n",description_based_timesheets)
+        
+        for entry in distinct_descriptions:
+            # Extract project_code and description from the dictionary
+            project_code = entry['project__code']
+            description = entry['description']
+
+            # Initialize the project in the dictionary if it doesn't exist
+            if project_code not in description_based_timesheets:
+                project = get_object_or_404(Project, code=project_code)
+                description_based_timesheets[project_code] = {
+                    "description": {},  # Initialize description as an empty dictionary
+                    "project": project  # Assign the project only once
+                }
+
+            # Initialize the description in the nested dictionary if it doesn't exist
+            if description not in description_based_timesheets[project_code]["description"]:
+                description_based_timesheets[project_code]["description"][description] = {
+                    'Monday': 0.00, 'Tuesday': 0.00, 'Wednesday': 0.00, 'Thursday': 0.00,
+            'Friday': 0.00, 'Saturday': 0.00, 'Sunday': 0.00,
+                }
+
+            # Fetch timesheets for this project and description
+            full_timesheets_for_that_project_with_description = Timesheet.objects.filter(
+                employee=employee,
+                project=description_based_timesheets[project_code]["project"].id,
+                description=description,
+                date__range=(
+                    get_current_week_start().strftime("%Y-%m-%d"),
+                    get_current_week_end().strftime("%Y-%m-%d")
+                )
+            ).order_by('date')
+
+            # Assign hours worked for the corresponding day of the week
+            for timesheet_entry in full_timesheets_for_that_project_with_description:
+                day_of_week = timesheet_entry.date.strftime("%A")
+                description_based_timesheets[project_code]["description"][description][day_of_week] =  timesheet_entry.hours_worked if timesheet_entry else 0 
+                    
         weekly_total = 0
-        for timesheet in weekly_timesheets:
-           timesheet.day = timesheet.date.strftime("%A")
-           weekly_total+=timesheet.hours_worked
         context = {
-            "weekly_timesheets" : weekly_timesheets,
+            "desc_timesheets" : description_based_timesheets,
             'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
             'weekly_total' : weekly_total,
             'projects': projects,
             'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
         }
-        # employee = get_object_or_404(get_user_model(),id=request.user.id)
-        # weekly_timesheets = Timesheet.objects.filter(employee=employee,date__range=(get_current_week_start().strftime("%Y-%m-%d"),get_current_week_end().strftime("%Y-%m-%d"))).order_by('date')
-        # projects = Project.objects.filter(team=employee.team)
-        # weekly_total = 0
-        # for timesheet in weekly_timesheets:
-        #    timesheet.day = timesheet.date.strftime("%A")
-        #    weekly_total+=timesheet.hours_worked
-        # context = {
-        #     "weekly_timesheets" : weekly_timesheets,
-        #     'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
-        #     'weekly_total' : weekly_total,
-        #     'projects': projects,
-        #     'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
-        # }
         return render(request, 'home/home.html',context)
 
 
@@ -603,40 +624,57 @@ def add_timesheet_entry(request, project_id):
     return render(request, 'home/new-timesheet-entry.html', {'form': form, 'project_name': project_name, 'project': project})
 
 
-
+#current version
 @login_required(login_url="/login/")
 def create_timesheet_entry(request):
 
     if request.method == 'POST':
         data = json.loads(request.body)
         print("data is\n", data)
+
+        # Get project and form data
         project_id = data.get('project_id')
         project = get_object_or_404(Project, pk=project_id)
-        
-        
+
+        description = data.get('description')
+        date = data.get('date')
+
+        # Check if there's an existing timesheet entry for the same project, task description, and date
+        existing_timesheet = Timesheet.objects.filter(
+            Q(employee=request.user) & 
+            Q(project=project) & 
+            Q(description=description) &
+            Q(date=date)
+        ).first()
 
         form = TimesheetForm(data={
-            'description': data.get('description'),
+            'description': description,
             'hours_worked': data.get('hours_worked')
         })
-        if form.is_valid():
-            print("getting the date")
-            timesheet = form.save(commit=False)
-            # Set the additional fields manually
-            timesheet.date = data.get('date')
-            print("got the date",data.get('date'))
-            timesheet.employee = request.user
-            timesheet.project = project
-            timesheet.save()  # Now save to the database
 
-            messages.success(request, 'Timesheet entry created successfully.')  
+        if form.is_valid():
+            # If an entry exists, update it, otherwise create a new one
+            if existing_timesheet:
+                # Update existing timesheet entry
+                existing_timesheet.hours_worked = data.get('hours_worked')
+                existing_timesheet.save()
+                messages.success(request, 'Timesheet entry updated successfully.')
+            else:
+                # Create new timesheet entry
+                timesheet = form.save(commit=False)
+                timesheet.date = date
+                timesheet.employee = request.user
+                timesheet.project = project
+                timesheet.save()
+                messages.success(request, 'Timesheet entry created successfully.')
+
             return redirect('home')
         else:
-            messages.error(request, 'Error submitting timesheet. Please correct the form errors.')  
+            messages.error(request, 'Error submitting timesheet. Please correct the form errors.')
     else:
         form = TimesheetForm()
 
-    return render(request, 'home')
+    return render(request, 'home', {'form': form})
 
 
 #account related updates 
