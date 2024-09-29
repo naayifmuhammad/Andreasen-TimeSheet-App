@@ -129,7 +129,7 @@
                                     <th></th>
                                 </tr>
                                 <tr>
-                                    <th colspan="12" id="weekly_total" style="text-align: left;"></th>
+                                    <th colspan="12" id="weekly_total" style="text-align: left;">{{weekly_total}}</th>
                                 </tr>
                             </tbody>
                         </table>
@@ -346,11 +346,13 @@
                             countColumnValues(8);
                             countColumnValues(9);
                             countColumnValues(10);
-                            countColumnValues(11);
+                            
+                            
                             calculateTotalHours();
                             
 
-                            document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + {{weekly_total}} + " hours"
+                            document.getElementById('weekly_total').innerHTML = "Total hours worked this week: " + {{weekly_total}} + " hours";
+                            countColumnValues(11);
                         });
 
                         function countColumnValues(columnIndex) {
@@ -367,7 +369,6 @@
 
                             let finalCell = table.rows[rowCount - 1].cells[columnIndex-3];
                             finalCell.innerText = count + " hours";
-                            // weekly_total += count;
                         }
                     </script>
                 </div>

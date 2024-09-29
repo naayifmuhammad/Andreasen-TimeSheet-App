@@ -56,6 +56,8 @@ def index(request):
                 get_current_week_end().strftime("%Y-%m-%d")
             )
         ).values('project__code', 'description').distinct()
+
+        total_hours_worked = 0
             
         # Initialize dictionary for description-based timesheets
         description_based_timesheets = {}
@@ -96,15 +98,18 @@ def index(request):
             for timesheet_entry in full_timesheets_for_that_project_with_description:
                 day_of_week = timesheet_entry.date.strftime("%A")
                 description_based_timesheets[project_code]["description"][description][day_of_week] =  timesheet_entry.hours_worked if timesheet_entry else 0 
+            total_hours_worked += timesheet_entry.hours_worked if timesheet_entry else 0
                     
-        weekly_total = 0
+        
+
         context = {
             "desc_timesheets" : description_based_timesheets,
             'week_ending' : get_current_week_end().strftime("%d-%m-%y"),
-            'weekly_total' : weekly_total,
+            'weekly_total' : total_hours_worked,
             'projects': projects,
             'dates_for_work_days': get_dates_of_week_from_day(datetime.today()),
         }
+        print(description_based_timesheets)
         return render(request, 'home/home.html',context)
 
 
@@ -570,11 +575,9 @@ def get_description_suggestions(request):
 def get_week_dates(request, week_type):
     if week_type == 'current':
         week_dates = get_dates_of_week_from_day(datetime.today(),False)
-        print("week dates = ", week_dates)
     elif week_type == 'previous':
         last_week_date = datetime.today() - timedelta(days=7)
         week_dates = get_dates_of_week_from_day(last_week_date,False)
-        print("week dates = ", week_dates)
     else:
         week_dates = []
     week_choices = [(date.strftime('%Y-%m-%d'), date.strftime('%A')) for date in week_dates]
@@ -631,7 +634,6 @@ def create_timesheet_entry(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         print("data is\n", data)
-
         # Get project and form data
         project_id = data.get('project_id')
         project = get_object_or_404(Project, pk=project_id)
