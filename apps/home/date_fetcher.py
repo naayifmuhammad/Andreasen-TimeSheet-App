@@ -40,12 +40,10 @@ def get_current_week_dates():
 def getWeekDatesFromStartDate(date):
     # Calculate the start of the week (Monday)
     start_of_week = date - timedelta(days=date.weekday())
-    # Create a list of dates for Monday to Friday
-    #weekdates = [start_of_week + timedelta(days=i) for i in range(5)]
     weekdates = []
-    for i in range(5):
+    for i in range(7):  # Loop through the entire week, Monday to Sunday
         nextday = start_of_week + timedelta(days=i)
-        weekdates.append(nextday.strftime("%d-%b"))
+        weekdates.append(nextday.strftime("%d-%b"))  # Format date as 'day-abbreviation of month'
     return weekdates
 
 
