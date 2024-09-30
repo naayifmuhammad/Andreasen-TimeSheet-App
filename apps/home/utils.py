@@ -1,5 +1,8 @@
 import calendar
+from decimal import Decimal
 import io
+from io import BytesIO
+
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter #type:ignore   
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph #type:ignore  
@@ -82,13 +85,21 @@ def get_report_ready_months():
 
 
 
-#generates the pdf for project based report
-def generate_project_report(single_mode, project=None,team=None, timesheets=None, duration=None, filename=None):
+from collections import defaultdict
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.colors import HexColor
+import io
+from django.http import HttpResponse
+
+def generate_project_report(single_mode, project=None, team=None, timesheets=None, duration=None, filename=None):
     # Create a response object and set content type
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-    
     # Create a PDF object
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -97,10 +108,7 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
     # Define styles
     styles = getSampleStyleSheet()
 
-
-
-
-    # footer  style
+    # Footer style
     blackTH = ParagraphStyle(
         'blackBoldText',
         parent=styles['BodyText'],
@@ -110,128 +118,145 @@ def generate_project_report(single_mode, project=None,team=None, timesheets=None
         splitLongWords=True,
     )
 
-
     style_left = ParagraphStyle(
-    'LeftAligned',
-    parent=styles['Normal'],
-    alignment=0,  # Left alignment
-    fontSize=12,
-    spaceAfter=6
-)
+        'LeftAligned',
+        parent=styles['Normal'],
+        alignment=0,  # Left alignment
+        fontSize=12,
+        spaceAfter=6
+    )
     style_left_bold = ParagraphStyle(
-    'LeftAligned',
-    parent=styles['Normal'],
-    alignment=0,  # Left alignment
-    fontSize=9,
-    fontName='Helvetica-Bold',  # Bold font
-    spaceAfter=6
-)
+        'LeftAlignedBold',
+        parent=styles['Normal'],
+        alignment=0,  # Left alignment
+        fontSize=9,
+        fontName='Helvetica-Bold',  # Bold font
+        spaceAfter=6
+    )
 
-
+    #currently not using this single project mode. Just ensure that the report generation using checkboxes work
     if single_mode:
-        
-        elements.append(Paragraph(f"{team}", styles['Title']))
-        elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-        elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
-        elements.append(Paragraph(f"Customer: {project.customer.name}", style_left))
-        elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
-        elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
+        # elements.append(Paragraph(f"{team}", styles['Title']))
+        # elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
+        # elements.append(Paragraph(f"Project: {project.name}({project.code})", style_left))
+        # elements.append(Paragraph(f"Customer: {project.customer.name}", style_left))
+        # elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
+        # elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
-        # Create table data
-        table_data = [
-            ['Date','Employee', 'Description', 'Hours Worked'],
-        ]
+        # # Create table data
+        # table_data = [
+        #     ['Date', 'Employee', 'Description', 'Hours Worked'],
+        # ]
 
-        # Add data from previous and current timesheets
-        total_hours_worked = 0
-        for week in timesheets:
-            for timesheet in week:
-                table_data.append([
-                    timesheet.date,
-                    timesheet.employee,
-                    timesheet.description,
-                    timesheet.hours_worked,
-                ])
-                total_hours_worked += timesheet.hours_worked
-        table_data.append(["","","",""])
-        table_data.append(["","",Paragraph("Total:",blackTH),Paragraph(total_hours_worked,blackTH)])
-    
+        # # Group the timesheets by employee and description, and sum the hours worked
+        # grouped_timesheets = defaultdict(lambda: defaultdict(float))
+        # for week in timesheets:
+        #     for timesheet in week:
+        #         key = (timesheet.employee, timesheet.description)
+        #         grouped_timesheets[key][timesheet.date] += float(timesheet.hours_worked)
+
+
+        # total_hours_worked = 0
+        # for (employee, description), date_hours in grouped_timesheets.items():
+        #     for date, hours in date_hours.items():
+        #         table_data.append([
+        #             date,
+        #             employee,
+        #             description,
+        #             hours
+        #         ])
+        #         total_hours_worked += hours
+
+        # table_data.append(["", "", "", ""])
+        # table_data.append(["", "", Paragraph("Total:", blackTH), Paragraph(str(total_hours_worked), blackTH)])
+        pass
+
     else:
-        
         elements.append(Paragraph(f"{team}", styles['Title']))
-        elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
+        elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
         elements.append(Paragraph(f"Project Report", style_left))
         elements.append(Paragraph(f"{duration['start']} to {duration['end']}", styles['Normal']))
-        elements.append(Paragraph("<br/><br/>", styles['Normal'])) 
+        elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
         # Create table data
         table_data = [
-            ['Date','Employee', 'Description', 'Hours Worked'],
+            ['Employee', 'Description', 'Hours Worked'],
         ]
-        total_hours_worked = 0
+
+        monthly_total = Decimal(0)  # Initialize as Decimal
         for project_info in timesheets:
+            weekly_total = Decimal(0) # Initialize as Decimal
             # Add a header row for the project
             table_data.append([
-                Paragraph(f"{project_info['project_code']}",blackTH),
-                Paragraph(f"{project_info['project_name']}",blackTH),
-                Paragraph(f"{project_info['customer_name']}",blackTH),
-                '',
+                Paragraph(f"{project_info['project_code']}", blackTH),
+                Paragraph(f"{project_info['project_name']}", blackTH),
+                Paragraph(f"{project_info['customer_name']}", blackTH),
             ])
-            total_for_this_project  = 0
+
+            # Group the timesheets by employee and description for this project
+            unique_timesheets = defaultdict(Decimal)  # Only store unique employee-description combos
+
             for timesheet in project_info['timesheets']:
+                # Create a unique key for each combination of employee and description
+                key = (timesheet.employee, timesheet.description)
+                unique_timesheets[key] += Decimal(timesheet.hours_worked)  # Sum hours for unique combos
+
+            # Populate table data with unique entries
+            for (employee, description), hours in unique_timesheets.items():
                 table_data.append([
-                    timesheet.date,
-                    timesheet.employee,
-                    timesheet.description,
-                    timesheet.hours_worked,
+                    employee,
+                    description,
+                    hours
                 ])
-                total_hours_worked += timesheet.hours_worked
-                total_for_this_project+=timesheet.hours_worked
+                weekly_total += hours
+                monthly_total += hours
+            
+            table_data.append(["", Paragraph("Weekly Total:", blackTH), Paragraph(str(weekly_total), blackTH)])
+            table_data.append(["", '',''])
 
-            # Add a blank row for spacing
-            table_data.append(["","",Paragraph("Total:",blackTH),Paragraph(str(total_for_this_project),blackTH)])
-            table_data.append(["","","",""])
-        table_data.append(["", "", Paragraph("Monthly Total:",blackTH),Paragraph(str(total_hours_worked),blackTH)])
+        table_data.append(["", Paragraph("Monthly Total:", blackTH), Paragraph(str(monthly_total), blackTH)])
 
-    # Create table
-    colWidths = [doc.width * 0.25,doc.width * 0.2,doc.width * 0.4,doc.width * 0.15]
-    table = Table(table_data,colWidths=colWidths)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), HexColor("#088484")),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
-    ]))
-    
-    elements.append(table)
+        # Create the table
+        colWidths = [doc.width * 0.33, doc.width * 0.33, doc.width * 0.33]
+        table = Table(table_data, colWidths=colWidths)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor("#088484")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+        ]))
 
-    elements.append(Paragraph("<br/><br/><br/>",styles['Normal']))
-    elements.append(Paragraph(f"Total hours worked: {total_hours_worked} hours", style_left_bold))
-    
-    # Build PDF
-    doc.build(elements)
-    
-    # Get the value of the BytesIO buffer and write it to the response
-    pdf = buffer.getvalue()
-    buffer.close()
-    response.write(pdf)
-    
-    return response
+        elements.append(table)
 
+        elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
+        elements.append(Paragraph(f"Total hours worked: {monthly_total} hours", style_left_bold))
 
+        # Build PDF
+        doc.build(elements)
+
+        # Get the value of the BytesIO buffer and write it to the response
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+
+        return response
 
 
 
-# Function to generate employee report PDF
+
+
+
+# Function to generate employee report PDF {old code, uncomment if the newer one fails to work}
 def generate_employee_report(employee, weekranges, filename, duration):
     # Create a response object and set content type
+    print(weekranges)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
+
     # Create a PDF object
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -244,29 +269,27 @@ def generate_employee_report(employee, weekranges, filename, duration):
     styleN.alignment = TA_LEFT
     styleBH = styles["Normal"]
     styleBH.alignment = TA_CENTER
-    # Define the header style
+
+    # Define the header and footer styles
     whiteTH = ParagraphStyle(
         'WhiteBoldText',
         parent=styles['BodyText'],
-        fontName='Helvetica-Bold',  # Bold font
+        fontName='Helvetica-Bold',
         fontSize=9,
         textColor=colors.white
     )
-    # footer  style
     blackTH = ParagraphStyle(
         'blackBoldText',
         parent=styles['BodyText'],
-        fontName='Helvetica-Bold',  # Bold font
+        fontName='Helvetica-Bold',
         fontSize=9,
         textColor=colors.black
     )
-
-
     style_left = ParagraphStyle(
         'LeftAligned',
         parent=styles['Normal'],
-        alignment=0,  # Left alignment
-        fontName='Helvetica-Bold',  # Bold font
+        alignment=0,
+        fontName='Helvetica-Bold',
         fontSize=11,
         spaceAfter=6
     )
@@ -278,66 +301,111 @@ def generate_employee_report(employee, weekranges, filename, duration):
     elements.append(Paragraph(f"{duration['start'].strftime('%d-%m-%y')} to {duration['end'].strftime('%d-%m-%y')}", style_left))
     elements.append(Paragraph("<br/><br/>", styles['Normal']))
 
-    
-    
-    # Add data from previous and current timesheets
+    # Initialize the total hours for each day
     total_time_worked_in_specific_day = {
-        'Monday' : 0,
-        'Tuesday' : 0,
-        'Wednesday' : 0,
-        'Thursday' : 0,
-        'Friday' : 0,
-
+        'Monday': 0,
+        'Tuesday': 0,
+        'Wednesday': 0,
+        'Thursday': 0,
+        'Friday': 0,
+        'Saturday': 0,
+        'Sunday': 0,
     }
     overAllTotalTimeWorked = 0
+
     for weekrange in weekranges:
         weeklytotalworkdone = 0
-        # Create table data
-        table_data = [
-            [
-        'Project', 'Description',
-        Paragraph(f"Mon<br/>{weekrange['dates'][0]}",whiteTH), Paragraph(f"Tue<br/>{weekrange['dates'][1]}",whiteTH), 
-        Paragraph(f"Wed<br/>{weekrange['dates'][2]}",whiteTH), Paragraph(f"Thu<br/>{weekrange['dates'][3]}",whiteTH), 
-        Paragraph(f"Fri<br/>{weekrange['dates'][4]}",whiteTH), 'Total'
-            ]
-        ]
+
+        # Create a dictionary to hold the project and description data
+        work_data = {}
+
+        # Group timesheets by (project, description)
         for timesheet in weekrange['timesheets']:
-            total_time_worked_in_specific_day[timesheet.date.strftime('%A')] += timesheet.hours_worked
+            key = (timesheet.project.code, timesheet.description)
+            if key not in work_data:
+                work_data[key] = {
+                    'Monday': 0,
+                    'Tuesday': 0,
+                    'Wednesday': 0,
+                    'Thursday': 0,
+                    'Friday': 0,
+                    'Saturday': 0,
+                    'Sunday': 0,
+                    'Total': 0
+                }
+            # Add hours to the appropriate day
+            day_of_week = timesheet.date.strftime('%A')
+            work_data[key][day_of_week] += timesheet.hours_worked
+            work_data[key]['Total'] += timesheet.hours_worked
+
+            # Update the overall totals
+            total_time_worked_in_specific_day[day_of_week] += timesheet.hours_worked
             overAllTotalTimeWorked += timesheet.hours_worked
             weeklytotalworkdone += timesheet.hours_worked
+
+        # Create the table data
+        table_data = [
+            [
+                'Project', 'Description',
+                Paragraph(f"Mon<br/>{weekrange['dates'][0]}", whiteTH),
+                Paragraph(f"Tue<br/>{weekrange['dates'][1]}", whiteTH),
+                Paragraph(f"Wed<br/>{weekrange['dates'][2]}", whiteTH),
+                Paragraph(f"Thu<br/>{weekrange['dates'][3]}", whiteTH),
+                Paragraph(f"Fri<br/>{weekrange['dates'][4]}", whiteTH),
+                Paragraph(f"Sat<br/>{weekrange['dates'][5]}", whiteTH),
+                Paragraph(f"Sun<br/>{weekrange['dates'][6]}", whiteTH),
+                'Total'
+            ]
+        ]
+
+        # Add rows for each project and description from the work_data dictionary
+        for (project_code, description), hours in work_data.items():
             table_data.append([
-                Paragraph(timesheet.project.code, styleN),
-                Paragraph(timesheet.description, styleN),  # Wrapping text in Paragraph
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Monday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Tuesday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Wednesday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Thursday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Friday' else timesheet.hours_worked), styleN),
-                Paragraph(str(timesheet.hours_worked), styleN),
+                Paragraph(project_code, styleN),
+                Paragraph(description, styleN),
+                Paragraph(str(hours['Monday']), styleN),
+                Paragraph(str(hours['Tuesday']), styleN),
+                Paragraph(str(hours['Wednesday']), styleN),
+                Paragraph(str(hours['Thursday']), styleN),
+                Paragraph(str(hours['Friday']), styleN),
+                Paragraph(str(hours['Saturday']), styleN),
+                Paragraph(str(hours['Sunday']), styleN),
+                Paragraph(str(hours['Total']), styleN),
             ])
-       
+
+        # Add totals for the week
         table_data.append([
             Paragraph('', blackTH),
-            Paragraph('Total hours worked', blackTH),
+            Paragraph('Total', blackTH),
             Paragraph(str(total_time_worked_in_specific_day["Monday"]), blackTH),
             Paragraph(str(total_time_worked_in_specific_day["Tuesday"]), blackTH),
             Paragraph(str(total_time_worked_in_specific_day["Wednesday"]), blackTH),
             Paragraph(str(total_time_worked_in_specific_day["Thursday"]), blackTH),
             Paragraph(str(total_time_worked_in_specific_day["Friday"]), blackTH),
-
+            Paragraph(str(total_time_worked_in_specific_day["Saturday"]), blackTH),
+            Paragraph(str(total_time_worked_in_specific_day["Sunday"]), blackTH),
             Paragraph(str(weeklytotalworkdone), blackTH),
         ])
-        # Create table with custom column widths
+
+        # Column widths
+        fixed_columns_width = (doc.width * 0.14) + (doc.width * 0.15) + (doc.width * 0.07)
+        remaining_width = doc.width - fixed_columns_width
+        day_column_width = remaining_width / 7
+
         col_widths = [
-        doc.width * 0.14,  # 10%
-        doc.width * 0.24,  # 22%
-        doc.width * 0.1,  # 8%
-        doc.width * 0.1,  # 8%
-        doc.width * 0.1,  # 8%
-        doc.width * 0.1,  # 8%
-        doc.width * 0.1,  # 8%
-        doc.width * 0.12   # Adjusted to fill remaining width (28%)
+            doc.width * 0.14,  # 14% for 'Project'
+            doc.width * 0.12,  # 15% for 'Description'
+            day_column_width,  # Distributed width for 'Monday'
+            day_column_width,  # Distributed width for 'Tuesday'
+            day_column_width,  # Distributed width for 'Wednesday'
+            day_column_width,  # Distributed width for 'Thursday'
+            day_column_width,  # Distributed width for 'Friday'
+            day_column_width,  # Distributed width for 'Saturday'
+            day_column_width,  # Distributed width for 'Sunday'
+            doc.width * 0.10   # 7% for 'Total'
         ]
+
+        # Create and style the table
         table = Table(table_data, colWidths=col_widths)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HexColor('#088484')),
@@ -350,20 +418,23 @@ def generate_employee_report(employee, weekranges, filename, duration):
             ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
         ]))
 
+        # Add the table to the elements
         elements.append(table)
 
+    # Add total hours worked at the end of the document
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Total: {overAllTotalTimeWorked} hours", style_left))
-    
-    # Build PDF
+
+    # Build the PDF
     doc.build(elements)
-    
+
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
     buffer.close()
     response.write(pdf)
-    
+
     return response
+
 
 
  
