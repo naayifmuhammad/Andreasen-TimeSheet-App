@@ -626,13 +626,10 @@ def add_timesheet_entry(request, project_id):
     return render(request, 'home/new-timesheet-entry.html', {'form': form, 'project_name': project_name, 'project': project})
 
 
-#current version
 @login_required(login_url="/login/")
 def create_timesheet_entry(request):
-
     if request.method == 'POST':
         data = json.loads(request.body)
-        print("data is\n", data)
         # Get project and form data
         project_id = data.get('project_id')
         project = get_object_or_404(Project, pk=project_id)
@@ -644,7 +641,7 @@ def create_timesheet_entry(request):
         existing_timesheet = Timesheet.objects.filter(
             Q(employee=request.user) & 
             Q(project=project) & 
-            Q(description=description) &
+            Q(description=description) & 
             Q(date=date)
         ).first()
 
@@ -654,20 +651,34 @@ def create_timesheet_entry(request):
         })
 
         if form.is_valid():
+            hours_worked = int(data.get('hours_worked'))
+
             # If an entry exists, update it, otherwise create a new one
             if existing_timesheet:
-                # Update existing timesheet entry
-                existing_timesheet.hours_worked = data.get('hours_worked')
-                existing_timesheet.save()
-                messages.success(request, 'Timesheet entry updated successfully.')
+                print("here, hours worked : ", hours_worked)
+                if hours_worked == 0:
+                    # Delete the existing timesheet entry if hours worked is 0
+                    print("deleted..")
+                    existing_timesheet.delete()
+                    messages.success(request, 'Timesheet entry deleted successfully.')
+                else:
+                    # Update existing timesheet entry
+                    existing_timesheet.hours_worked = hours_worked
+                    existing_timesheet.save()
+                    messages.success(request, 'Timesheet entry updated successfully.')
             else:
-                # Create new timesheet entry
-                timesheet = form.save(commit=False)
-                timesheet.date = date
-                timesheet.employee = request.user
-                timesheet.project = project
-                timesheet.save()
-                messages.success(request, 'Timesheet entry created successfully.')
+                if hours_worked > 0:
+                    # Create new timesheet entry
+                    timesheet = form.save(commit=False)
+                    timesheet.date = date
+                    timesheet.employee = request.user
+                    timesheet.project = project
+                    timesheet.save()
+
+                    print('Timesheet entry created successfully.')
+                    messages.success(request, 'Timesheet entry created successfully.')
+                else:
+                    messages.warning(request, 'Cannot create a timesheet entry with 0 hours worked.')
 
             return redirect('home')
         else:
@@ -676,6 +687,7 @@ def create_timesheet_entry(request):
         form = TimesheetForm()
 
     return render(request, 'home', {'form': form})
+
 
 
 #account related updates 
