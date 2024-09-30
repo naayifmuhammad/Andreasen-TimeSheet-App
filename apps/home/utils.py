@@ -394,11 +394,12 @@ def generate_employee_report(employee, weekranges, filename, duration):
     print(weekranges)
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-  
+
     # Create a PDF object
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
+
     # Define styles
     styles = getSampleStyleSheet()
     styleN = styles["BodyText"]
@@ -406,79 +407,111 @@ def generate_employee_report(employee, weekranges, filename, duration):
     styleN.alignment = TA_LEFT
     styleBH = styles["Normal"]
     styleBH.alignment = TA_CENTER
-    # Define the header style
+
+    # Define the header and footer styles
     whiteTH = ParagraphStyle(
         'WhiteBoldText',
         parent=styles['BodyText'],
-        fontName='Helvetica-Bold',  # Bold font
+        fontName='Helvetica-Bold',
         fontSize=9,
         textColor=colors.white
     )
-    # footer  style
     blackTH = ParagraphStyle(
         'blackBoldText',
         parent=styles['BodyText'],
-        fontName='Helvetica-Bold',  # Bold font
+        fontName='Helvetica-Bold',
         fontSize=9,
         textColor=colors.black
     )
     style_left = ParagraphStyle(
         'LeftAligned',
         parent=styles['Normal'],
-        alignment=0,  # Left alignment
-        fontName='Helvetica-Bold',  # Bold font
+        alignment=0,
+        fontName='Helvetica-Bold',
         fontSize=11,
         spaceAfter=6
     )
+
     # Add company name and project name
     elements.append(Paragraph(f"{employee.get_full_name()}", styles['Title']))
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Team: {employee.team.name}", style_left))
     elements.append(Paragraph(f"{duration['start'].strftime('%d-%m-%y')} to {duration['end'].strftime('%d-%m-%y')}", style_left))
     elements.append(Paragraph("<br/><br/>", styles['Normal']))
-  
-  
-    # Add data from previous and current timesheets
+
+    # Initialize the total hours for each day
     total_time_worked_in_specific_day = {
-        'Monday' : 0,
-        'Tuesday' : 0,
-        'Wednesday' : 0,
-        'Thursday' : 0,
-        'Friday' : 0,
-        'Saturday' : 0,
-        'Sunday' : 0,
+        'Monday': 0,
+        'Tuesday': 0,
+        'Wednesday': 0,
+        'Thursday': 0,
+        'Friday': 0,
+        'Saturday': 0,
+        'Sunday': 0,
     }
     overAllTotalTimeWorked = 0
+
     for weekrange in weekranges:
         weeklytotalworkdone = 0
-        # Create table data
-        table_data = [
-            [
-        'Project', 'Description',
-        Paragraph(f"Mon<br/>{weekrange['dates'][0]}",whiteTH), Paragraph(f"Tue<br/>{weekrange['dates'][1]}",whiteTH), 
-        Paragraph(f"Wed<br/>{weekrange['dates'][2]}",whiteTH), Paragraph(f"Thu<br/>{weekrange['dates'][3]}",whiteTH), 
-        Paragraph(f"Fri<br/>{weekrange['dates'][4]}",whiteTH), 
-        Paragraph(f"Sat<br/>{weekrange['dates'][5]}",whiteTH), 
-        Paragraph(f"Sun<br/>{weekrange['dates'][6]}",whiteTH), 'Total'
-            ]
-        ]
+
+        # Create a dictionary to hold the project and description data
+        work_data = {}
+
+        # Group timesheets by (project, description)
         for timesheet in weekrange['timesheets']:
-            total_time_worked_in_specific_day[timesheet.date.strftime('%A')] += timesheet.hours_worked
+            key = (timesheet.project.code, timesheet.description)
+            if key not in work_data:
+                work_data[key] = {
+                    'Monday': 0,
+                    'Tuesday': 0,
+                    'Wednesday': 0,
+                    'Thursday': 0,
+                    'Friday': 0,
+                    'Saturday': 0,
+                    'Sunday': 0,
+                    'Total': 0
+                }
+            # Add hours to the appropriate day
+            day_of_week = timesheet.date.strftime('%A')
+            work_data[key][day_of_week] += timesheet.hours_worked
+            work_data[key]['Total'] += timesheet.hours_worked
+
+            # Update the overall totals
+            total_time_worked_in_specific_day[day_of_week] += timesheet.hours_worked
             overAllTotalTimeWorked += timesheet.hours_worked
             weeklytotalworkdone += timesheet.hours_worked
+
+        # Create the table data
+        table_data = [
+            [
+                'Project', 'Description',
+                Paragraph(f"Mon<br/>{weekrange['dates'][0]}", whiteTH),
+                Paragraph(f"Tue<br/>{weekrange['dates'][1]}", whiteTH),
+                Paragraph(f"Wed<br/>{weekrange['dates'][2]}", whiteTH),
+                Paragraph(f"Thu<br/>{weekrange['dates'][3]}", whiteTH),
+                Paragraph(f"Fri<br/>{weekrange['dates'][4]}", whiteTH),
+                Paragraph(f"Sat<br/>{weekrange['dates'][5]}", whiteTH),
+                Paragraph(f"Sun<br/>{weekrange['dates'][6]}", whiteTH),
+                'Total'
+            ]
+        ]
+
+        # Add rows for each project and description from the work_data dictionary
+        for (project_code, description), hours in work_data.items():
             table_data.append([
-                Paragraph(timesheet.project.code, styleN),
-                Paragraph(timesheet.description, styleN),  # Wrapping text in Paragraph
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Monday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Tuesday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Wednesday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Thursday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Friday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Saturday' else timesheet.hours_worked), styleN),
-                Paragraph(str(0 if timesheet.date.strftime('%A') != 'Sunday' else timesheet.hours_worked), styleN),
-                Paragraph(str(timesheet.hours_worked), styleN),
+                Paragraph(project_code, styleN),
+                Paragraph(description, styleN),
+                Paragraph(str(hours['Monday']), styleN),
+                Paragraph(str(hours['Tuesday']), styleN),
+                Paragraph(str(hours['Wednesday']), styleN),
+                Paragraph(str(hours['Thursday']), styleN),
+                Paragraph(str(hours['Friday']), styleN),
+                Paragraph(str(hours['Saturday']), styleN),
+                Paragraph(str(hours['Sunday']), styleN),
+                Paragraph(str(hours['Total']), styleN),
             ])
-     
+
+        # Add totals for the week
         table_data.append([
             Paragraph('', blackTH),
             Paragraph('Total hours worked', blackTH),
@@ -491,15 +524,12 @@ def generate_employee_report(employee, weekranges, filename, duration):
             Paragraph(str(total_time_worked_in_specific_day["Sunday"]), blackTH),
             Paragraph(str(weeklytotalworkdone), blackTH),
         ])
-        # Fixed column widths for 'Project', 'Description', and 'Total'
+
+        # Column widths
         fixed_columns_width = (doc.width * 0.14) + (doc.width * 0.15) + (doc.width * 0.07)
-        
-        # Remaining width to be distributed among the 7 day columns (Monday to Sunday)
         remaining_width = doc.width - fixed_columns_width
-        
-        # Evenly distribute the remaining width among the 7 day columns
         day_column_width = remaining_width / 7
-        
+
         col_widths = [
             doc.width * 0.14,  # 14% for 'Project'
             doc.width * 0.15,  # 15% for 'Description'
@@ -512,6 +542,8 @@ def generate_employee_report(employee, weekranges, filename, duration):
             day_column_width,  # Distributed width for 'Sunday'
             doc.width * 0.07   # 7% for 'Total'
         ]
+
+        # Create and style the table
         table = Table(table_data, colWidths=col_widths)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), HexColor('#088484')),
@@ -523,19 +555,24 @@ def generate_employee_report(employee, weekranges, filename, duration):
             ('BACKGROUND', (0, 1), (-1, -1), colors.white),
             ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
         ]))
+
+        # Add the table to the elements
         elements.append(table)
+
+    # Add total hours worked at the end of the document
     elements.append(Paragraph("<br/><br/><br/>", styles['Normal']))
     elements.append(Paragraph(f"Total: {overAllTotalTimeWorked} hours", style_left))
-  
-    # Build PDF
+
+    # Build the PDF
     doc.build(elements)
-  
+
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
     buffer.close()
     response.write(pdf)
-  
+
     return response
+
 
 
  
