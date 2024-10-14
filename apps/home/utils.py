@@ -184,14 +184,25 @@ def generate_project_report(single_mode, project=None, team=None, timesheets=Non
         ]
 
         monthly_total = Decimal(0)  # Initialize as Decimal
+        previous_project_code = None  # Track the previous project code
+
         for project_info in timesheets:
-            weekly_total = Decimal(0) # Initialize as Decimal
+            project_monthly_total = Decimal(0)
+
+            if project_info['project_code'] != previous_project_code:
+                table_data.append([
+                    Paragraph(f"{project_info['project_code']}", blackTH),
+                    Paragraph(f"{project_info['project_name']}", blackTH),
+                    Paragraph(f"{project_info['customer_name']}", blackTH),
+                ])
+                previous_project_code = project_info['project_code']
+            # weekly_total = Decimal(0) # Initialize as Decimal
             # Add a header row for the project
-            table_data.append([
-                Paragraph(f"{project_info['project_code']}", blackTH),
-                Paragraph(f"{project_info['project_name']}", blackTH),
-                Paragraph(f"{project_info['customer_name']}", blackTH),
-            ])
+            # table_data.append([
+            #     Paragraph(f"{project_info['project_code']}", blackTH),
+            #     Paragraph(f"{project_info['project_name']}", blackTH),
+            #     Paragraph(f"{project_info['customer_name']}", blackTH),
+            # ])
 
             # Group the timesheets by employee and description for this project
             unique_timesheets = defaultdict(Decimal)  # Only store unique employee-description combos
@@ -208,13 +219,20 @@ def generate_project_report(single_mode, project=None, team=None, timesheets=Non
                     description,
                     hours
                 ])
-                weekly_total += hours
-                monthly_total += hours
+                # weekly_total += hours
+                project_monthly_total += hours
             
-            table_data.append(["", Paragraph("Weekly Total:", blackTH), Paragraph(str(weekly_total), blackTH)])
-            table_data.append(["", '',''])
+            # table_data.append(["", Paragraph("Weekly Total:", blackTH), Paragraph(str(weekly_total), blackTH)])
+            # table_data.append(["", '',''])
 
-        table_data.append(["", Paragraph("Monthly Total:", blackTH), Paragraph(str(monthly_total), blackTH)])
+            # table_data.append(["", Paragraph("Monthly Total:", blackTH), Paragraph(str(monthly_total), blackTH)])
+            table_data.append(["", Paragraph("Monthly Total for Project:", blackTH), Paragraph(str(project_monthly_total), blackTH)])
+            table_data.append(["", '', ''])
+
+            monthly_total += project_monthly_total
+            
+        table_data.append(["", Paragraph("Total Monthly Hours for All Projects:", blackTH), Paragraph(str(monthly_total), blackTH)])
+
 
         # Create the table
         colWidths = [doc.width * 0.33, doc.width * 0.33, doc.width * 0.33]
