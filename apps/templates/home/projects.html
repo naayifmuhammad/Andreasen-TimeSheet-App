@@ -104,6 +104,7 @@
                                 <tr>
                                     {% if user.is_staff %}
                                     <th>Mark for export</th>
+                                    <th>Edit</th>
                                     {% endif %}
                                     <th>Code</th>
                                     <th>Name</th>
@@ -121,6 +122,7 @@
                                 <tr>
                                     {% if user.is_staff %}
                                     <td><input type="checkbox" name="mark-for-export" id="{{project.id}}"></td>
+                                    <td><a href=""><i class="fas fa-edit"></i></a></td>
                                     {% endif %}
                                     <td>{{ project.code }}</td>
                                     <td onclick="window.location='{% url 'project_details' project_id=project.id %}';" style="cursor: pointer;">{{ project.name }}</td>

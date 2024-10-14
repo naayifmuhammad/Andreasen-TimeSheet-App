@@ -56,12 +56,16 @@ def get_report_ready_months():
         # Get the current date
         end_date = datetime.now().date()
 
+        # Get the last day of the current month
+        _, last_day_current_month = calendar.monthrange(end_date.year, end_date.month)
+        end_of_current_month = end_date.replace(day=last_day_current_month)
+
         # Initialize a list to hold the months
         months = []
 
-        # Start from the earliest date and go up to the current date
+        # Start from the earliest date and go up to the end of the current month
         current_date = earliest_date
-        while current_date <= end_date:
+        while current_date <= end_of_current_month:
             # Get the start and end dates of the current month
             start_of_month = current_date.replace(day=1).strftime('%d/%m/%Y')
             _, last_day = calendar.monthrange(current_date.year, current_date.month)
@@ -76,10 +80,12 @@ def get_report_ready_months():
 
             # Move to the next month
             current_date += relativedelta(months=1)
+        print(months)
         return months
     except Timesheet.DoesNotExist:
         # Handle the exception when no Timesheets exist
         return None
+
 
 
 
@@ -231,7 +237,7 @@ def generate_project_report(single_mode, project=None, team=None, timesheets=Non
 
             monthly_total += project_monthly_total
             
-        table_data.append(["", Paragraph("Total Monthly Hours for All Projects:", blackTH), Paragraph(str(monthly_total), blackTH)])
+        # table_data.append(["", Paragraph("Total Monthly Hours for All Projects:", blackTH), Paragraph(str(monthly_total), blackTH)])
 
 
         # Create the table

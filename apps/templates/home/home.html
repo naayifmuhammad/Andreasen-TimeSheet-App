@@ -90,7 +90,7 @@
                                     <td name="p-name"></td>
                                     <td name="p-customer"></td>
                                     <td class="" name="p-description">
-                                        <input class="form-control timesheet-description" type="text" name="timesheet-description" id="timesheet-description" placeholder="Description of work*">
+                                        <input class="form-control timesheet-description" type="text" name="timesheet-description" id="timesheet-description" required placeholder="Description of work*">
                                         <ul id="suggestions-list" style="display: none;"></ul> <!-- Suggestions will be shown here -->
                                     </td>
                                     <td  class="" name="Monday">
@@ -238,9 +238,12 @@
 
                             //get the project description
                             var description = document.getElementById('timesheet-description').value;
-                            
+                            if(description==""){
+                                alert("Please enter a description");
+                            }
                             var hours_worked_field = fetchTimeWorked();
                             var hours_worked = hours_worked_field.value;
+                            
                             var date = hours_worked_field.dataset.workdate;                            
                             sendDataToServer(project_id,description,hours_worked,date);
                         }
