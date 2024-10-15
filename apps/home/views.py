@@ -183,8 +183,6 @@ def export_project_based_timesheet_summary(request):
 
         start_date = datetime.strptime(start_date,'%d/%m/%Y').date()
         end_date = datetime.strptime(end_date, '%d/%m/%Y').date()
-
-        week_ranges = generate_week_ranges_from_given_startdate_till_date(start_date,end_date)
         
         selected_projects = request.POST.get('selected_projects')
         
@@ -192,30 +190,27 @@ def export_project_based_timesheet_summary(request):
             # Split the selected_projects string to get the list of project IDs
             selected_project_ids = selected_projects.split(',')
         
-        weekly_timesheets = []
-        for week in week_ranges:
-            for project_id in selected_project_ids:
-                project_timesheets = Timesheet.objects.filter(
-                    project=project_id, 
-                    date__range=(week['start'].strftime("%Y-%m-%d"), week['end'].strftime("%Y-%m-%d"))
-                ).order_by('employee')
+        monthly_timesheets = []
 
-                if project_timesheets.exists():
-                    project_info = {
+        for project_id in selected_project_ids:
+            project_timesheets = Timesheet.objects.filter(
+                    project=project_id, 
+                    date__range=(start_date, end_date)
+                ).order_by('employee')
+            if project_timesheets.exists():
+                project_info = {
                         'project_code': project_timesheets[0].project.code,
                         'project_id': project_timesheets[0].project.id,
                         'project_name': project_timesheets[0].project.name,
                         'customer_name': project_timesheets[0].project.customer.name,
                         'timesheets': project_timesheets,
                     }
-                    weekly_timesheets.append(project_info)
-
-
+                monthly_timesheets.append(project_info)
     context = {
     'single_mode' : single_mode,
     'project' : projects if request.method== 'GET' else None,
     'team' : request.user.team,
-    'timesheets' : weekly_timesheets,
+    'timesheets' : monthly_timesheets,
     'duration' : {'start': start_date.strftime('%d-%m-%y'),'end': end_date.strftime('%d-%m-%y')},
     'filename' : f"report-({start_date.strftime('%d-%m-%y')}-to{end_date.strftime('%d-%m-%y')}).pdf"
     }
