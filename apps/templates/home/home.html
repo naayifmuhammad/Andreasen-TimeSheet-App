@@ -52,7 +52,7 @@
                                         <td>{{ details.project.customer }}</td>
                                 
                                         <!-- Description of the task -->
-                                        <td>{{ description }}</td>
+                                        <td class="desc-of-work">{{ description }}</td>
                                 
                                         <!-- Hours worked for each day of the week -->
                                         <td name="mon">{{ days.Monday }}</td>
@@ -89,7 +89,7 @@
                                     </td>
                                     <td name="p-name"></td>
                                     <td name="p-customer"></td>
-                                    <td class="" name="p-description">
+                                    <td class="" name="p-description" class="p-description">
                                         <input class="form-control timesheet-description" type="text" name="timesheet-description" id="timesheet-description" required placeholder="Description of work*">
                                         <ul id="suggestions-list" style="display: none;"></ul> <!-- Suggestions will be shown here -->
                                     </td>

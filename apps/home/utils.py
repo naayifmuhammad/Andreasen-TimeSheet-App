@@ -221,8 +221,8 @@ def generate_project_report(single_mode, project=None, team=None, timesheets=Non
             # Populate table data with unique entries
             for (employee, description), hours in unique_timesheets.items():
                 table_data.append([
-                    employee,
-                    description,
+                    Paragraph(str(employee), styles['Normal']),
+                    Paragraph(description, styles['Normal']),
                     hours
                 ])
                 # weekly_total += hours
