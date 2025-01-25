@@ -1,13 +1,13 @@
-version: '3.8'
 services:
-  appseed-app:
-    container_name: appseed_app
+  timesheetapp:
+    container_name: timesheetapp
     restart: always
     env_file: .env
     build: .
     networks:
       - db_network
       - web_network
+    
   nginx:
     container_name: nginx
     restart: always
@@ -15,11 +15,12 @@ services:
     ports:
       - "5085:5085"
     volumes:
+  
       - ./nginx:/etc/nginx/conf.d
     networks:
       - web_network
     depends_on: 
-      - appseed-app
+      - timesheetapp
 networks:
   db_network:
     driver: bridge
