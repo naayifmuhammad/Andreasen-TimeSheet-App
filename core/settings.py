@@ -22,8 +22,8 @@ DEBUG = env('DEBUG')
 ASSETS_ROOT = os.getenv('ASSETS_ROOT', '/static/assets') 
 
 # load production server from .env
-ALLOWED_HOSTS        = ['localhost', '127.0.0.1','ec2-3-87-56-193.compute-1.amazonaws.com',"3.87.56.193",               env('SERVER', default='127.0.0.1') ]
-CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://127.0.0.1', 'https://' + env('SERVER', default='127.0.0.1') ]
+ALLOWED_HOSTS        = ['localhost', '127.0.0.1','ec2-3-87-56-193.compute-1.amazonaws.com','3.87.56.193',               env('SERVER', default='127.0.0.1') ]
+CSRF_TRUSTED_ORIGINS = ['localhost', '127.0.0.1','ec2-3-87-56-193.compute-1.amazonaws.com','3.87.56.193',  'https://' + env('SERVER', default='127.0.0.1') ]
 
 # Application definition
 
