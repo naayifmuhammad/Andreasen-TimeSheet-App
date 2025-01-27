@@ -25,10 +25,10 @@ class TimesheetForm(forms.ModelForm):
         model = Timesheet
         fields = ['hours_worked', 'description']
         validators = [MaxValueValidator(24)]
-        max_digits = 2,
         widgets = {
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'hours_worked': forms.NumberInput(attrs={'type': 'number', 'class': 'form-control smaller'}),
+            #'hours_worked': forms.NumberInput(attrs={'type': 'number', 'class': 'form-control smaller'}),
+            'hours_worked': forms.NumberInput(attrs={'class': 'form-control smaller', 'step': '0.1'}),
         }
 
 class ProjectForm(forms.ModelForm):

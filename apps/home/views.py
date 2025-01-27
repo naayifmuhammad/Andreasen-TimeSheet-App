@@ -646,7 +646,7 @@ def create_timesheet_entry(request):
         })
 
         if form.is_valid():
-            hours_worked = int(data.get('hours_worked'))
+            hours_worked = round(float(data.get('hours_worked')), 2)
 
             # If an entry exists, update it, otherwise create a new one
             if existing_timesheet:
